@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TravelWise.API.Data;
+using TravelWise.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,7 +8,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// 2. Add Controllers
+// 2. Register Services and Controllers
+builder.Services.AddScoped<BudgetService>();
 builder.Services.AddControllers();
 
 // Add services to the container.
