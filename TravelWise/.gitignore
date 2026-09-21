@@ -1,0 +1,44 @@
+# =========================
+# 1. ASP.NET Core Backend
+# =========================
+backend/**/bin/
+backend/**/obj/
+backend/**/appsettings.Development.json
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# =========================
+# 2. React Web Application
+# =========================
+frontend-web/node_modules/
+frontend-web/dist/
+frontend-web/build/
+frontend-web/.env
+frontend-web/.env.local
+
+# =========================
+# 3. Flutter Mobile App
+# =========================
+frontend-mobile/.dart_tool/
+frontend-mobile/build/
+frontend-mobile/.pub-cache/
+frontend-mobile/.packages
+frontend-mobile/.env
+*.keystore
+
+# =========================
+# 4. Python AI Service
+# =========================
+ai-service/__pycache__/
+ai-service/venv/
+ai-service/.env
+ai-service/.pytest_cache/
+
+# =========================
+# 5. OS & IDE Files
+# =========================
+.DS_Store
+.vscode/
+.idea/

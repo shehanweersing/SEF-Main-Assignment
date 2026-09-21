@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TravelWise.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bed4704e0dc1ea516eef5f8e5a8ab32d306e4085")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d0e41343838dd26eac0fdb0360e0fe512f7f851c")]
 [assembly: System.Reflection.AssemblyProductAttribute("TravelWise.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TravelWise.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
