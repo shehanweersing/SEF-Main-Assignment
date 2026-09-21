@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using TravelWise.API.Data;
 using TravelWise.API.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +23,22 @@ builder.Services.AddScoped<ActivityService>();
 builder.Services.AddScoped<RiskService>();
 builder.Services.AddScoped<ReadinessService>();
 
+// JWT Authentication Configuration
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+        };
+    });
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -32,6 +51,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 // 3. Map controllers and enable authorization
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
