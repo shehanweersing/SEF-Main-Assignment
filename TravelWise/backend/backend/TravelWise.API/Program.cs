@@ -16,6 +16,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<ActivityService>();
+builder.Services.AddScoped<RiskService>();
 
 var app = builder.Build();
 
