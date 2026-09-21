@@ -18,6 +18,7 @@ namespace TravelWise.API.Data
         public DbSet<Expense> Expenses { get; set; }
         public DbSet<Activity> Activities { get; set; }
         public DbSet<RiskAssessment> RiskAssessments { get; set; }
+        public DbSet<TravelDocument> TravelDocuments { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

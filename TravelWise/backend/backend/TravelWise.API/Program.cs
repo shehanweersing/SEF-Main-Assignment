@@ -12,11 +12,13 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<BudgetService>();
 builder.Services.AddControllers();
 
+
 // Add services to the container.
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<ActivityService>();
 builder.Services.AddScoped<RiskService>();
+builder.Services.AddScoped<ReadinessService>();
 
 var app = builder.Build();
 
