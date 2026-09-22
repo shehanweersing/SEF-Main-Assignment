@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using TravelWise.API.Data;
 using TravelWise.API.Models;
 using TravelWise.API.Utilities;
+using System.Security.Claims;
 
 namespace TravelWise.API.Controllers
 {
@@ -28,7 +29,22 @@ namespace TravelWise.API.Controllers
         public async Task<IActionResult> GetTrip(int id) => await _context.Trips.FindAsync(id) is { } trip ? Ok(trip) : NotFound();
 
         [HttpPost]
-        public async Task<IActionResult> CreateTrip([FromBody] Trip trip) { trip.Id = 0; trip.StartDate = DateTimeNormalization.ToUtc(trip.StartDate); trip.EndDate = DateTimeNormalization.ToUtc(trip.EndDate); trip.CreatedAt = DateTime.UtcNow; trip.UpdatedAt = DateTime.UtcNow; if (string.IsNullOrWhiteSpace(trip.Status)) trip.Status = "Created"; _context.Trips.Add(trip); await _context.SaveChangesAsync(); return CreatedAtAction(nameof(GetTrip), new { id = trip.Id }, trip); }
+        public async Task<IActionResult> CreateTrip([FromBody] Trip trip)
+        {
+            var claimUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(claimUserId, out var userId)) return Unauthorized("The authenticated user could not be identified.");
+            if (!await _context.Users.AnyAsync(user => user.Id == userId)) return BadRequest("The authenticated user does not exist.");
+            trip.Id = 0;
+            trip.UserId = userId;
+            trip.StartDate = DateTimeNormalization.ToUtc(trip.StartDate);
+            trip.EndDate = DateTimeNormalization.ToUtc(trip.EndDate);
+            trip.CreatedAt = DateTime.UtcNow;
+            trip.UpdatedAt = DateTime.UtcNow;
+            if (string.IsNullOrWhiteSpace(trip.Status)) trip.Status = "Created";
+            _context.Trips.Add(trip);
+            await _context.SaveChangesAsync();
+            return CreatedAtAction(nameof(GetTrip), new { id = trip.Id }, trip);
+        }
 
         [HttpPut("{id:int}")]
         public async Task<IActionResult> UpdateTrip(int id, [FromBody] Trip input) { var trip = await _context.Trips.FindAsync(id); if (trip is null) return NotFound(); trip.UserId = input.UserId; trip.Destination = input.Destination; trip.StartDate = DateTimeNormalization.ToUtc(input.StartDate); trip.EndDate = DateTimeNormalization.ToUtc(input.EndDate); trip.TravelObjective = input.TravelObjective; trip.Status = input.Status; trip.UpdatedAt = DateTime.UtcNow; await _context.SaveChangesAsync(); return Ok(trip); }
