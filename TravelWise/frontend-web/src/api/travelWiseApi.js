@@ -27,6 +27,7 @@ export const activityApi = {
 }
 
 export const riskApi = {
+  getWeather: (destination, signal) => axiosInstance.get('/Risk/weather', { params: { destination }, signal }),
   list: (tripId) => axiosInstance.get('/Risk', { params: tripId ? { tripId } : undefined }),
   get: (id) => axiosInstance.get(`/Risk/${id}`),
   addAssessment: (assessment) => axiosInstance.post('/Risk', assessment),

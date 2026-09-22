@@ -14,12 +14,17 @@ namespace TravelWise.API.Controllers
     {
         private readonly RiskService _riskService;
         private readonly ApplicationDbContext _context;
+        private readonly WeatherTelemetryService _weatherTelemetryService;
 
-        public RiskController(RiskService riskService, ApplicationDbContext context)
+        public RiskController(RiskService riskService, ApplicationDbContext context, WeatherTelemetryService weatherTelemetryService)
         {
             _riskService = riskService;
             _context = context;
+            _weatherTelemetryService = weatherTelemetryService;
         }
+
+        [HttpGet("weather")]
+        public Task<TravelWise.API.DTOs.WeatherTelemetryDto> GetWeather([FromQuery] string destination, CancellationToken cancellationToken) => _weatherTelemetryService.GetWeatherAsync(destination, cancellationToken);
 
         [HttpGet]
         public async Task<IActionResult> GetAssessments([FromQuery] int? tripId) => Ok(await _context.RiskAssessments.Where(r => !tripId.HasValue || r.TripId == tripId).OrderByDescending(r => r.AssessmentDate).ToListAsync());
