@@ -1,8 +1,11 @@
 import api from './axiosInstance'
 
-export async function fetchTrips(searchQuery = '') {
-  const { data } = await api.get('/Trip', { params: searchQuery.trim() ? { search: searchQuery.trim() } : undefined })
-  return data
+export async function fetchTrips(searchQuery = '', userId) {
+  const params = {}
+  if (searchQuery.trim()) params.search = searchQuery.trim()
+  if (userId) params.userId = userId
+  const { data } = await api.get('/Trip', { params })
+  return Array.isArray(data) ? data : data ? [data] : []
 }
 
 export async function createTrip(tripData) {
