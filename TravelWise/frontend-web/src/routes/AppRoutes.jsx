@@ -15,7 +15,7 @@ function Unauthorized() { return <div className="center-page"><span className="e
 function LoginRedirect() { const { isAuthenticated } = useAuth(); return isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage /> }
 
 export default function AppRoutes() { return <BrowserRouter><Routes>
-  <Route path="/" element={<LandingPage />} /><Route path="/login" element={<LoginRedirect />} /><Route path="/unauthorized" element={<Unauthorized />} />
+  <Route path="/" element={<LandingPage />} /><Route path="/results" element={<LandingPage />} /><Route path="/login" element={<LoginRedirect />} /><Route path="/unauthorized" element={<Unauthorized />} />
   <Route element={<ProtectedRoute />}><Route element={<DashboardLayout />}><Route path="/dashboard" element={<DashboardHome />} /><Route path="/dashboard/budget" element={<BudgetPage />} /><Route path="/dashboard/activity" element={<ActivityPage />} /><Route path="/dashboard/risk" element={<RiskPage />} /><Route path="/dashboard/readiness" element={<ReadinessPage />} /></Route><Route path="/approvals" element={<ProtectedRoute allowedRoles={['Admin']} />}><Route index element={<ApprovalQueue />} /></Route></Route>
   <Route path="*" element={<Navigate to="/" replace />} />
 </Routes></BrowserRouter> }
