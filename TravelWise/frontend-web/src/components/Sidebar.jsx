@@ -1,9 +1,10 @@
 import { Link, NavLink } from 'react-router-dom'
-import { Activity, BarChart3, FileCheck2, LayoutDashboard, LogOut, ShieldAlert, Sparkles, Wallet } from 'lucide-react'
+import { Activity, FileCheck2, LayoutDashboard, LogOut, Map, ShieldAlert, Sparkles, Wallet } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 const links = [
   { label: 'Overview', to: '/dashboard', icon: LayoutDashboard, roles: ['Traveller', 'Admin', 'Staff'] },
+  { label: 'Trips', to: '/dashboard/trips', icon: Map, roles: ['Traveller', 'Admin', 'Staff'] },
   { label: 'Budget', to: '/dashboard/budget', icon: Wallet, roles: ['Traveller', 'Admin', 'Staff'] },
   { label: 'Activities', to: '/dashboard/activity', icon: Activity, roles: ['Traveller', 'Admin', 'Staff'] },
   { label: 'Risk radar', to: '/dashboard/risk', icon: ShieldAlert, roles: ['Traveller', 'Admin', 'Staff'] },

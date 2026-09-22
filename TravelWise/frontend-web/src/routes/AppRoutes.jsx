@@ -10,6 +10,9 @@ import ActivityPage from '../features/activity/ActivityPage'
 import RiskPage from '../features/risk/RiskPage'
 import ReadinessPage from '../features/readiness/ReadinessPage'
 import ApprovalQueue from '../features/approvals/ApprovalQueue'
+import TripDashboard from '../features/trips/TripDashboard'
+import '../features/trips/trips.css'
+  <Route path="/dashboard/trips" element={<TripDashboard />} />
 import ProtectedRoute from '../components/ProtectedRoute'
 
 function Unauthorized() { return <div className="center-page"><span className="eyebrow">403</span><h1>That view is restricted.</h1><p>Your workspace role does not have access to this area.</p><a className="button button-primary" href="/dashboard">Back to dashboard</a></div> }

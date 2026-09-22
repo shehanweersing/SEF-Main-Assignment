@@ -16,7 +16,13 @@ namespace TravelWise.API.Controllers
         public TripController(ApplicationDbContext context) => _context = context;
 
         [HttpGet]
-        public async Task<IActionResult> GetTrips([FromQuery] int? userId) => Ok(await _context.Trips.Where(t => !userId.HasValue || t.UserId == userId).OrderByDescending(t => t.StartDate).ToListAsync());
+        public async Task<IActionResult> GetTrips([FromQuery] int? userId, [FromQuery] string? search)
+        {
+            var query = _context.Trips.AsQueryable();
+            if (userId.HasValue) query = query.Where(t => t.UserId == userId);
+            if (!string.IsNullOrWhiteSpace(search)) query = query.Where(t => EF.Functions.ILike(t.Destination, $"%{search}%") || (t.TravelObjective != null && EF.Functions.ILike(t.TravelObjective, $"%{search}%")));
+            return Ok(await query.OrderByDescending(t => t.StartDate).ToListAsync());
+        }
 
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetTrip(int id) => await _context.Trips.FindAsync(id) is { } trip ? Ok(trip) : NotFound();
