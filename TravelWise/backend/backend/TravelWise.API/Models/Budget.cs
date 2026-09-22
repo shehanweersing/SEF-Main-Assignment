@@ -18,6 +18,13 @@ namespace TravelWise.API.Models
         [Column(TypeName = "decimal(18,2)")]
         public decimal TotalAllocation { get; set; }
 
+        [NotMapped]
+        public decimal TotalBudget
+        {
+            get => TotalAllocation;
+            set => TotalAllocation = value;
+        }
+
         [Required]
         [MaxLength(3)]
         public string Currency { get; set; } = "LKR"; // Defaulting to Sri Lankan Rupees for your context

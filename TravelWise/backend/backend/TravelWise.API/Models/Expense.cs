@@ -10,6 +10,9 @@ namespace TravelWise.API.Models
 
         [Required]
         public int BudgetId { get; set; }
+
+        [NotMapped]
+        public int TripId => Budget?.TripId ?? 0;
         
         [ForeignKey("BudgetId")]
         public Budget? Budget { get; set; }
