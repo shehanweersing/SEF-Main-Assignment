@@ -5,6 +5,7 @@ using TravelWise.API.Data;
 using TravelWise.API.DTOs;
 using TravelWise.API.Models;
 using TravelWise.API.Services;
+using TravelWise.API.Utilities;
 
 namespace TravelWise.API.Controllers
 {
@@ -58,7 +59,7 @@ namespace TravelWise.API.Controllers
         }
 
         [HttpPut("expenses/{id:int}")]
-        public async Task<IActionResult> UpdateExpense(int id, [FromBody] CreateExpenseDto dto) { var expense = await _context.Expenses.FindAsync(id); if (expense is null) return NotFound(); if (dto.Amount <= 0) return BadRequest("Expense amount must be greater than zero."); expense.BudgetId = dto.BudgetId; expense.Category = dto.Category; expense.Description = dto.Description; expense.Amount = dto.Amount; expense.ExpenseDate = dto.ExpenseDate; await _context.SaveChangesAsync(); return Ok(expense); }
+        public async Task<IActionResult> UpdateExpense(int id, [FromBody] CreateExpenseDto dto) { var expense = await _context.Expenses.FindAsync(id); if (expense is null) return NotFound(); if (dto.Amount <= 0) return BadRequest("Expense amount must be greater than zero."); expense.BudgetId = dto.BudgetId; expense.Category = dto.Category; expense.Description = dto.Description; expense.Amount = dto.Amount; expense.ExpenseDate = DateTimeNormalization.ToUtc(dto.ExpenseDate); await _context.SaveChangesAsync(); return Ok(expense); }
 
         [HttpDelete("expenses/{id:int}")]
         public async Task<IActionResult> DeleteExpense(int id) { var expense = await _context.Expenses.FindAsync(id); if (expense is null) return NotFound(); _context.Expenses.Remove(expense); await _context.SaveChangesAsync(); return NoContent(); }

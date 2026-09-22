@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using TravelWise.API.Data;
 using TravelWise.API.DTOs;
 using TravelWise.API.Services;
+using TravelWise.API.Utilities;
 
 namespace TravelWise.API.Controllers
 {
@@ -46,8 +47,9 @@ namespace TravelWise.API.Controllers
         {
             var document = await _context.TravelDocuments.FindAsync(id);
             if (document is null) return NotFound();
-            if (dto.ExpiryDate.Date <= DateTime.UtcNow.Date) return BadRequest("Document is already expired and cannot be used for travel (BR-READY-01).");
-            document.TripId = dto.TripId; document.DocumentType = dto.DocumentType; document.DocumentNumber = dto.DocumentNumber; document.ExpiryDate = dto.ExpiryDate;
+            var expiryDate = DateTimeNormalization.ToUtc(dto.ExpiryDate);
+            if (expiryDate.Date <= DateTime.UtcNow.Date) return BadRequest("Document is already expired and cannot be used for travel (BR-READY-01).");
+            document.TripId = dto.TripId; document.DocumentType = dto.DocumentType; document.DocumentNumber = dto.DocumentNumber; document.ExpiryDate = expiryDate;
             await _context.SaveChangesAsync();
             return Ok(document);
         }

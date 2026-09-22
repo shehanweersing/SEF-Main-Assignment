@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using TravelWise.API.Data;
 using TravelWise.API.DTOs;
 using TravelWise.API.Models;
+using TravelWise.API.Utilities;
 
 namespace TravelWise.API.Services
 {
@@ -25,7 +26,7 @@ namespace TravelWise.API.Services
                 Category = dto.Category,
                 Description = dto.Description,
                 Amount = dto.Amount,
-                ExpenseDate = dto.ExpenseDate
+                ExpenseDate = DateTimeNormalization.ToUtc(dto.ExpenseDate)
             };
 
             _context.Expenses.Add(expense);

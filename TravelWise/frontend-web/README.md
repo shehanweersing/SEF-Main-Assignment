@@ -27,4 +27,6 @@ npm run dev
 ```
 
 Tailwind is configured through `@tailwindcss/vite`; styles are imported from `src/index.css`.
-Set `VITE_API_URL` in `.env` to the backend base URL, for example `https://localhost:7127/api`.
+Set `VITE_API_URL` in `.env` to the backend base URL, for example `http://localhost:5147/api`.
+
+Run the backend from `TravelWise/backend/backend/TravelWise.API` with `dotnet run --launch-profile http` before using signup or login.

@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using TravelWise.API.Data;
 using TravelWise.API.DTOs;
 using TravelWise.API.Models;
+using TravelWise.API.Utilities;
 
 namespace TravelWise.API.Services
 {
@@ -16,11 +17,14 @@ namespace TravelWise.API.Services
 
         public async Task<Activity> AddActivityAsync(CreateActivityDto dto)
         {
+            var startTime = DateTimeNormalization.ToUtc(dto.StartTime);
+            var endTime = DateTimeNormalization.ToUtc(dto.EndTime);
+
             // Enforce BR-ACT-01: Backend Validation for No Overlap
             var hasOverlap = await _context.Activities
                 .AnyAsync(a => a.TripId == dto.TripId &&
-                               a.StartTime < dto.EndTime &&
-                               dto.StartTime < a.EndTime);
+                               a.StartTime < endTime &&
+                               startTime < a.EndTime);
 
             if (hasOverlap)
                 throw new InvalidOperationException("Activity times overlap with an existing schedule (BR-ACT-01).");
@@ -30,8 +34,8 @@ namespace TravelWise.API.Services
                 TripId = dto.TripId,
                 Title = dto.Title,
                 Description = dto.Description,
-                StartTime = dto.StartTime,
-                EndTime = dto.EndTime,
+                StartTime = startTime,
+                EndTime = endTime,
                 Location = dto.Location,
                 InterestType = dto.InterestType
             };

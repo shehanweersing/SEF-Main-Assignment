@@ -5,6 +5,7 @@ using TravelWise.API.Data;
 using TravelWise.API.DTOs;
 using TravelWise.API.Models;
 using TravelWise.API.Services;
+using TravelWise.API.Utilities;
 
 namespace TravelWise.API.Controllers
 {
@@ -48,9 +49,11 @@ namespace TravelWise.API.Controllers
         {
             var activity = await _context.Activities.FindAsync(id);
             if (activity is null) return NotFound();
-            var overlap = await _context.Activities.AnyAsync(a => a.Id != id && a.TripId == dto.TripId && a.StartTime < dto.EndTime && dto.StartTime < a.EndTime);
+            var startTime = DateTimeNormalization.ToUtc(dto.StartTime);
+            var endTime = DateTimeNormalization.ToUtc(dto.EndTime);
+            var overlap = await _context.Activities.AnyAsync(a => a.Id != id && a.TripId == dto.TripId && a.StartTime < endTime && startTime < a.EndTime);
             if (overlap) return Conflict("Activity times overlap with an existing schedule (BR-ACT-01).");
-            activity.TripId = dto.TripId; activity.Title = dto.Title; activity.Description = dto.Description; activity.StartTime = dto.StartTime; activity.EndTime = dto.EndTime; activity.Location = dto.Location; activity.InterestType = dto.InterestType;
+            activity.TripId = dto.TripId; activity.Title = dto.Title; activity.Description = dto.Description; activity.StartTime = startTime; activity.EndTime = endTime; activity.Location = dto.Location; activity.InterestType = dto.InterestType;
             await _context.SaveChangesAsync();
             return Ok(activity);
         }
