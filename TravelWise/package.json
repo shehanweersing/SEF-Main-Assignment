@@ -1,0 +1,12 @@
+{
+  "dependencies": {
+    "@hookform/resolvers": "^5.9.1",
+    "@tailwindcss/vite": "^4.3.3",
+    "axios": "^1.20.0",
+    "lucide-react": "^1.47.0",
+    "react-hook-form": "^7.88.0",
+    "react-router-dom": "^7.18.4",
+    "tailwindcss": "^4.3.3",
+    "zod": "^4.6.5"
+  }
+}

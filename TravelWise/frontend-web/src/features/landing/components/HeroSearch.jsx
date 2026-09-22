@@ -1,0 +1,6 @@
+import { CalendarDays, ChevronDown, MapPin, Search, Users } from 'lucide-react'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+
+const tabs = ['Budget', 'Activity', 'Risk', 'Readiness']
+export default function HeroSearch() { const [active, setActive] = useState('Budget'); const navigate = useNavigate(); return <section className="hero"><div className="hero-content"><span className="eyebrow eyebrow-light">Travel with clarity</span><h1>Go further.<br /><em>Worry less.</em></h1><p>One calm dashboard for every detail between your front door and somewhere unforgettable.</p><div className="search-panel"><div className="search-tabs">{tabs.map((tab) => <button key={tab} className={active === tab ? 'selected' : ''} onClick={() => setActive(tab)}>{tab}</button>)}</div><div className="search-fields"><label><MapPin size={17} /><span>Where to?<strong>Choose a destination</strong></span></label><label><CalendarDays size={17} /><span>When<strong>12 Sep - 20 Sep</strong></span></label><label><Users size={17} /><span>Travellers<strong>2 travellers</strong></span><ChevronDown size={15} /></label><button className="button button-coral" onClick={() => navigate('/results')}><Search size={17} /> Search</button></div></div></div><div className="hero-note">01 <span>Smart planning for real journeys</span></div></section> }

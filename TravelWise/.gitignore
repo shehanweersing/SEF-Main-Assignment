@@ -42,3 +42,4 @@ ai-service/.pytest_cache/
 .DS_Store
 .vscode/
 .idea/
+node_modules/

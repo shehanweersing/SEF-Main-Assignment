@@ -1,0 +1,2 @@
+import { BadgeCheck, Globe2, Headphones, Star } from 'lucide-react'
+export default function TrustBar() { return <section className="trust-bar"><span className="trust-label">Loved by thoughtful travellers</span><div><BadgeCheck size={18} /><strong>4.9/5</strong><small>planning confidence</small></div><div><Globe2 size={18} /><strong>120+</strong><small>destinations mapped</small></div><div><Headphones size={18} /><strong>24/7</strong><small>human support</small></div><div><Star size={18} /><strong>98%</strong><small>would recommend</small></div></section> }
