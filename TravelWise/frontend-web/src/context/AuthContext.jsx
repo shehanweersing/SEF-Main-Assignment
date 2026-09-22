@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import axiosInstance from '../api/axiosInstance'
+import { authApi } from '../api/travelWiseApi'
 
 const AuthContext = createContext(null)
 
@@ -23,7 +23,7 @@ export function AuthProvider({ children }) {
   }, [token])
 
   async function login(credentials) {
-    const { data } = await axiosInstance.post('/Auth/login', credentials)
+    const { data } = await authApi.login(credentials)
     const nextUser = { email: credentials.email, role: decodeRole(data.token) }
     setToken(data.token)
     setUser(nextUser)

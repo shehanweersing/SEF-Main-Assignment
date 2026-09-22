@@ -4,6 +4,9 @@ namespace TravelWise.API.DTOs
 {
     public class RegisterDto
     {
+        [Required(ErrorMessage = "Full name is required.")]
+        public string FullName { get; set; } = string.Empty;
+
         [Required(ErrorMessage = "Email is required.")]
         [EmailAddress(ErrorMessage = "Invalid email format.")]
         // This Regex specifically forces the email to end in common domains, blocking typos like .cm

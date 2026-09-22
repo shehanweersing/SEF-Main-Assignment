@@ -24,11 +24,13 @@ namespace TravelWise.API.Controllers
             _config = config;
         }
 
+        [AllowAnonymous]
         [HttpPost("register")]
         public IActionResult Register([FromBody] RegisterDto dto)
         {
             var user = new User 
             { 
+                FullName = dto.FullName,
                 Email = dto.Email, 
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
                 Role = dto.Role 
@@ -39,6 +41,7 @@ namespace TravelWise.API.Controllers
             return Ok(new { Message = "User registered successfully" });
         }
 
+        [AllowAnonymous]
         [HttpPost("login")]
         public IActionResult Login([FromBody] LoginDto dto)
         {

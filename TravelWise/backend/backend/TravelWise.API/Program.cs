@@ -14,6 +14,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // 2. Register Services and Controllers
 builder.Services.AddScoped<BudgetService>();
 builder.Services.AddControllers();
+builder.Services.AddCors(options => options.AddPolicy("Frontend", policy =>
+    policy.WithOrigins("http://localhost:5173", "https://localhost:5173")
+        .AllowAnyHeader()
+        .AllowAnyMethod()));
 
 
 // Add services to the container.
@@ -74,6 +78,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors("Frontend");
 
 // 3. Map controllers and enable authorization
 app.UseAuthentication();
