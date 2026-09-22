@@ -27,8 +27,16 @@ export function AuthProvider({ children }) {
   const role = user?.role || (token ? decodeRole(token) : null)
 
   useEffect(() => {
-    if (token) localStorage.setItem('travelwise_token', token)
-    else localStorage.removeItem('travelwise_token')
+    if (!token) {
+      localStorage.removeItem('travelwise_token')
+      return
+    }
+    localStorage.setItem('travelwise_token', token)
+    const hydratedUser = { ...(user || {}), id: user?.id || decodeUserId(token), role: user?.role || decodeRole(token) }
+    if (hydratedUser.id !== user?.id || hydratedUser.role !== user?.role) {
+      setUser(hydratedUser)
+      localStorage.setItem('travelwise_user', JSON.stringify(hydratedUser))
+    }
   }, [token])
 
   async function login(credentials) {

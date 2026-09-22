@@ -34,6 +34,7 @@ namespace TravelWise.API.Controllers
         {
             try
             {
+                if (!await _context.Trips.AnyAsync(t => t.Id == dto.TripId)) return BadRequest("The selected trip does not exist.");
                 var activity = await _activityService.AddActivityAsync(dto);
                 return CreatedAtAction(nameof(AddActivity), new { id = activity.Id }, activity);
             }

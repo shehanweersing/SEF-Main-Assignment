@@ -49,6 +49,7 @@ namespace TravelWise.API.Controllers
         {
             try
             {
+                if (!await _context.Budgets.AnyAsync(b => b.Id == dto.BudgetId)) return BadRequest("The selected budget does not exist.");
                 var expense = await _budgetService.AddExpenseAsync(dto);
                 return CreatedAtAction(nameof(AddExpense), new { id = expense.Id }, expense);
             }
