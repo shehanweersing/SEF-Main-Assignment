@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TravelWise.API.Data;
 using TravelWise.API.DTOs;
-using TravelWise.API.Models;
 using TravelWise.API.Services;
 using TravelWise.API.Utilities;
 
@@ -32,15 +31,21 @@ namespace TravelWise.API.Controllers
         [HttpPost]
         public async Task<IActionResult> AddActivity([FromBody] CreateActivityDto dto)
         {
+            var trip = await _context.Trips.FindAsync(dto.TripId);
+            if (trip is null) return BadRequest("The selected trip does not exist.");
+
+            var startTime = DateTimeNormalization.ToUtc(dto.StartTime);
+            var endTime = DateTimeNormalization.ToUtc(dto.EndTime);
+            if (startTime >= endTime) return BadRequest("Activity start time must be before its end time.");
+            if (startTime < trip.StartDate || endTime > trip.EndDate) return BadRequest($"Activity must be scheduled between {trip.StartDate:u} and {trip.EndDate:u}.");
+
             try
             {
-                if (!await _context.Trips.AnyAsync(t => t.Id == dto.TripId)) return BadRequest("The selected trip does not exist.");
                 var activity = await _activityService.AddActivityAsync(dto);
-                return CreatedAtAction(nameof(AddActivity), new { id = activity.Id }, activity);
+                return CreatedAtAction(nameof(GetActivity), new { id = activity.Id }, activity);
             }
             catch (InvalidOperationException ex)
             {
-                // Returns a 409 Conflict if BR-ACT-01 fails
                 return Conflict(ex.Message);
             }
         }
@@ -50,16 +55,37 @@ namespace TravelWise.API.Controllers
         {
             var activity = await _context.Activities.FindAsync(id);
             if (activity is null) return NotFound();
+
+            var trip = await _context.Trips.FindAsync(dto.TripId);
+            if (trip is null) return BadRequest("The selected trip does not exist.");
+
             var startTime = DateTimeNormalization.ToUtc(dto.StartTime);
             var endTime = DateTimeNormalization.ToUtc(dto.EndTime);
+            if (startTime >= endTime) return BadRequest("Activity start time must be before its end time.");
+            if (startTime < trip.StartDate || endTime > trip.EndDate) return BadRequest($"Activity must be scheduled between {trip.StartDate:u} and {trip.EndDate:u}.");
+
             var overlap = await _context.Activities.AnyAsync(a => a.Id != id && a.TripId == dto.TripId && a.StartTime < endTime && startTime < a.EndTime);
             if (overlap) return Conflict("Activity times overlap with an existing schedule (BR-ACT-01).");
-            activity.TripId = dto.TripId; activity.Title = dto.Title; activity.Description = dto.Description; activity.StartTime = startTime; activity.EndTime = endTime; activity.Location = dto.Location; activity.InterestType = dto.InterestType;
+
+            activity.TripId = dto.TripId;
+            activity.Title = dto.Title;
+            activity.Description = dto.Description;
+            activity.StartTime = startTime;
+            activity.EndTime = endTime;
+            activity.Location = dto.Location;
+            activity.InterestType = dto.InterestType;
             await _context.SaveChangesAsync();
             return Ok(activity);
         }
 
         [HttpDelete("{id:int}")]
-        public async Task<IActionResult> DeleteActivity(int id) { var activity = await _context.Activities.FindAsync(id); if (activity is null) return NotFound(); _context.Activities.Remove(activity); await _context.SaveChangesAsync(); return NoContent(); }
+        public async Task<IActionResult> DeleteActivity(int id)
+        {
+            var activity = await _context.Activities.FindAsync(id);
+            if (activity is null) return NotFound();
+            _context.Activities.Remove(activity);
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
     }
 }
