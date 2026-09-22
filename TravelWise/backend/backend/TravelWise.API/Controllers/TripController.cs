@@ -1,0 +1,32 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using TravelWise.API.Data;
+using TravelWise.API.Models;
+
+namespace TravelWise.API.Controllers
+{
+    [Authorize]
+    [ApiController]
+    [Route("api/[controller]")]
+    public class TripController : ControllerBase
+    {
+        private readonly ApplicationDbContext _context;
+        public TripController(ApplicationDbContext context) => _context = context;
+
+        [HttpGet]
+        public async Task<IActionResult> GetTrips([FromQuery] int? userId) => Ok(await _context.Trips.Where(t => !userId.HasValue || t.UserId == userId).OrderByDescending(t => t.StartDate).ToListAsync());
+
+        [HttpGet("{id:int}")]
+        public async Task<IActionResult> GetTrip(int id) => await _context.Trips.FindAsync(id) is { } trip ? Ok(trip) : NotFound();
+
+        [HttpPost]
+        public async Task<IActionResult> CreateTrip([FromBody] Trip trip) { trip.Id = 0; trip.CreatedAt = DateTime.UtcNow; trip.UpdatedAt = DateTime.UtcNow; if (string.IsNullOrWhiteSpace(trip.Status)) trip.Status = "Created"; _context.Trips.Add(trip); await _context.SaveChangesAsync(); return CreatedAtAction(nameof(GetTrip), new { id = trip.Id }, trip); }
+
+        [HttpPut("{id:int}")]
+        public async Task<IActionResult> UpdateTrip(int id, [FromBody] Trip input) { var trip = await _context.Trips.FindAsync(id); if (trip is null) return NotFound(); trip.UserId = input.UserId; trip.Destination = input.Destination; trip.StartDate = input.StartDate; trip.EndDate = input.EndDate; trip.TravelObjective = input.TravelObjective; trip.Status = input.Status; trip.UpdatedAt = DateTime.UtcNow; await _context.SaveChangesAsync(); return Ok(trip); }
+
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> DeleteTrip(int id) { var trip = await _context.Trips.FindAsync(id); if (trip is null) return NotFound(); _context.Trips.Remove(trip); await _context.SaveChangesAsync(); return NoContent(); }
+    }
+}
