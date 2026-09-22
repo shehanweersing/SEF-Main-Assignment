@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 import { Activity, BarChart3, FileCheck2, LayoutDashboard, LogOut, ShieldAlert, Sparkles, Wallet } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
@@ -14,7 +14,7 @@ const links = [
 export default function Sidebar() {
   const { role, user, logout } = useAuth()
   return <aside className="sidebar">
-    <div className="brand"><span className="brand-mark">TW</span><span>TravelWise</span></div>
+    <Link to="/" className="brand" title="Back to TravelWise home"><span className="brand-mark">TW</span><span>TravelWise</span></Link>
     <div className="sidebar-kicker">Workspace</div>
     <nav className="sidebar-nav">{links.filter((link) => link.roles.includes(role)).map(({ label, to, icon: Icon }) => <NavLink key={to} to={to} end={to === '/dashboard'} className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}><Icon size={17} /><span>{label}</span></NavLink>)}</nav>
     <div className="sidebar-footer"><div className="user-chip"><span className="avatar">{user?.email?.slice(0, 1).toUpperCase() || 'T'}</span><span><strong>{user?.email?.split('@')[0] || 'Traveller'}</strong><small>{role}</small></span></div><button className="icon-button" title="Log out" onClick={logout}><LogOut size={17} /></button></div>

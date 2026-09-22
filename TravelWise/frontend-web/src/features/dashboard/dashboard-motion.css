@@ -1,0 +1,2 @@
+.home-link{display:flex;align-items:center;gap:6px;margin-right:20px;color:var(--muted);font-size:10px;font-weight:700}.home-link:hover{color:var(--blue)}
+@media (prefers-reduced-motion: reduce){.dashboard-main{transition:none!important}}

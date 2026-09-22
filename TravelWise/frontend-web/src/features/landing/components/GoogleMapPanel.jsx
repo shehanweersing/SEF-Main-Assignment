@@ -1,0 +1,1 @@
+export default function GoogleMapPanel({ destination = 'Sri Lanka' }) { const src = `https://www.google.com/maps?q=${encodeURIComponent(destination || 'Sri Lanka')}&output=embed`; return <div className="google-map-panel"><iframe title={`Google map for ${destination || 'Sri Lanka'}`} src={src} loading="lazy" referrerPolicy="no-referrer-when-downgrade" /></div> }
