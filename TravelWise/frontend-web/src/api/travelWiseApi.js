@@ -49,3 +49,17 @@ export const tripApi = {
   update: (id, trip) => axiosInstance.put(`/Trip/${id}`, trip),
   remove: (id) => axiosInstance.delete(`/Trip/${id}`),
 }
+
+export async function getOrCreateTrip(userId) {
+  const { data: trips } = await tripApi.list(userId)
+  if (trips.length) return trips[0]
+  const { data } = await tripApi.create({ userId, destination: 'Sri Lanka', startDate: new Date(Date.now() + 86400000 * 18).toISOString(), endDate: new Date(Date.now() + 86400000 * 26).toISOString(), travelObjective: 'A thoughtful Sri Lanka escape', status: 'Planning' })
+  return data
+}
+
+export async function getOrCreateBudget(tripId) {
+  const { data: budgets } = await budgetApi.listBudgets(tripId)
+  if (budgets.length) return budgets[0]
+  const { data } = await budgetApi.createBudget({ tripId, totalAllocation: 2400, currency: 'USD' })
+  return data
+}

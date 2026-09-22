@@ -12,6 +12,15 @@ function decodeRole(token) {
   }
 }
 
+function decodeUserId(token) {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return Number(payload.nameid || payload.sub)
+  } catch {
+    return null
+  }
+}
+
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem('travelwise_token'))
   const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('travelwise_user') || 'null'))
@@ -24,7 +33,7 @@ export function AuthProvider({ children }) {
 
   async function login(credentials) {
     const { data } = await authApi.login(credentials)
-    const nextUser = { email: credentials.email, role: decodeRole(data.token) }
+    const nextUser = { id: decodeUserId(data.token), email: credentials.email, role: decodeRole(data.token) }
     setToken(data.token)
     setUser(nextUser)
     localStorage.setItem('travelwise_user', JSON.stringify(nextUser))
