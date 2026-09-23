@@ -3,14 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers/activity_provider.dart';
 import '../../core/providers/trips_provider.dart';
+import '../glass/glass_chip.dart';
 import '../glass/glass_container.dart';
 import '../theme/app_theme.dart';
 
-/// Activity timeline screen — `GET api/Activity?tripId=`.
-///
-/// Includes a glass add-activity dialog that enforces trip date bounds
-/// and catches + displays 400 (bounds) and 409 (overlap) errors from
-/// the backend verbatim.
+/// Redesigned Activity Timeline Screen featuring an Apple Liquid Glass
+/// vertical timeline, glowing node indicators, and modal add dialog.
 class ActivityScreen extends ConsumerStatefulWidget {
   const ActivityScreen({super.key});
 
@@ -31,35 +29,62 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
     final actState = ref.watch(activitiesProvider);
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // ── Screen Title & Header ──────────────────────────────
+        const Padding(
+          padding: EdgeInsets.fromLTRB(20, 16, 20, 4),
+          child: Text(
+            'Activity Timeline',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.textPrimary,
+              letterSpacing: -0.8,
+            ),
+          ),
+        ),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20),
+          child: Text(
+            'Schedule & itinerary breakdown',
+            style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+          ),
+        ),
+        const SizedBox(height: 16),
+
         // ── Trip selector + add button ────────────────────────────
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Row(
             children: [
               Expanded(
                 child: GlassContainer(
-                  borderRadius: AppTheme.radiusSm,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  borderRadius: 24,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<int>(
                       value: actState.selectedTripId,
-                      hint: const Text('Select a trip',
-                          style: TextStyle(color: AppTheme.textTertiary)),
+                      hint: Row(
+                        children: const [
+                          Icon(Icons.local_activity_rounded, color: AppTheme.accent, size: 20),
+                          SizedBox(width: 10),
+                          Text('Select a trip', style: TextStyle(color: AppTheme.textTertiary, fontSize: 14)),
+                        ],
+                      ),
                       dropdownColor: AppTheme.bgSurface,
                       iconEnabledColor: AppTheme.accent,
                       isExpanded: true,
-                      style: const TextStyle(color: AppTheme.textPrimary),
+                      style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w600, fontSize: 15),
                       items: tripsState.trips
                           .map((t) => DropdownMenuItem(
-                              value: t.id, child: Text(t.destination)))
+                                value: t.id,
+                                child: Text(t.destination),
+                              ))
                           .toList(),
                       onChanged: (tripId) {
                         if (tripId != null) {
-                          ref
-                              .read(activitiesProvider.notifier)
-                              .fetchActivities(tripId);
+                          ref.read(activitiesProvider.notifier).fetchActivities(tripId);
                         }
                       },
                     ),
@@ -72,50 +97,57 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
                     ? () => _showAddDialog(context, actState.selectedTripId!)
                     : null,
                 child: GlassContainer(
-                  borderRadius: AppTheme.radiusSm,
-                  padding: const EdgeInsets.all(12),
-                  child: Icon(Icons.add_rounded,
-                      color: actState.selectedTripId != null
-                          ? AppTheme.accent
-                          : AppTheme.textTertiary,
-                      size: 22),
+                  borderRadius: 24,
+                  padding: const EdgeInsets.all(14),
+                  tintColor: AppTheme.accent.withValues(alpha: 0.15),
+                  borderColor: AppTheme.accent.withValues(alpha: 0.4),
+                  child: Icon(
+                    Icons.add_rounded,
+                    color: actState.selectedTripId != null ? AppTheme.accent : AppTheme.textTertiary,
+                    size: 24,
+                  ),
                 ),
               ),
             ],
           ),
         ),
 
-        // ── Timeline ──────────────────────────────────────────────
+        const SizedBox(height: 20),
+
+        // ── Timeline List ──────────────────────────────────────────────
         Expanded(
           child: actState.isLoading
-              ? const Center(
-                  child:
-                      CircularProgressIndicator(color: AppTheme.accent))
+              ? const Center(child: CircularProgressIndicator(color: AppTheme.accent))
               : actState.errorMessage != null
-                  ? Center(
-                      child: Text(actState.errorMessage!,
-                          style: const TextStyle(
-                              color: AppTheme.error, fontSize: 14)))
+                  ? Center(child: Text(actState.errorMessage!, style: const TextStyle(color: AppTheme.error, fontSize: 14)))
                   : actState.activities.isEmpty
                       ? Center(
-                          child: Text(
-                            actState.selectedTripId == null
-                                ? 'Select a trip to view activities'
-                                : 'No activities scheduled',
-                            style: const TextStyle(
-                                color: AppTheme.textSecondary, fontSize: 15),
+                          child: GlassContainer(
+                            borderRadius: 24,
+                            margin: const EdgeInsets.all(32),
+                            padding: const EdgeInsets.all(32),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.event_note_outlined, size: 48, color: AppTheme.textTertiary),
+                                const SizedBox(height: 12),
+                                Text(
+                                  actState.selectedTripId == null
+                                      ? 'Select a trip above to view itinerary'
+                                      : 'No activities scheduled for this trip',
+                                  style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+                                ),
+                              ],
+                            ),
                           ),
                         )
                       : ListView.builder(
-                          padding:
-                              const EdgeInsets.fromLTRB(20, 0, 20, 100),
+                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
                           itemCount: actState.activities.length,
                           itemBuilder: (context, index) {
                             final act = actState.activities[index];
-                            final isLast =
-                                index == actState.activities.length - 1;
-                            return _TimelineItem(
-                                activity: act, isLast: isLast);
+                            final isLast = index == actState.activities.length - 1;
+                            return _TimelineItem(activity: act, isLast: isLast);
                           },
                         ),
         ),
@@ -123,10 +155,9 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
     );
   }
 
-  // ── Add-activity dialog ──────────────────────────────────────
+  // ── Liquid Glass Add-Activity Dialog ──────────────────────────────────────
 
   Future<void> _showAddDialog(BuildContext context, int tripId) async {
-    // Find the trip to get date bounds.
     final trips = ref.read(tripsProvider).trips;
     final trip = trips.firstWhere((t) => t.id == tripId);
 
@@ -145,36 +176,33 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
           backgroundColor: Colors.transparent,
           child: GlassContainer(
             blurSigma: 28,
-            borderRadius: AppTheme.radiusMd,
+            borderRadius: 28,
             padding: const EdgeInsets.all(24),
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text('Add Activity',
-                      style: TextStyle(
-                          color: AppTheme.textPrimary,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 6),
+                  const Text(
+                    'Add Activity',
+                    style: TextStyle(color: AppTheme.textPrimary, fontSize: 22, fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 4),
                   Text(
-                    'Trip dates: ${_fmtDate(trip.startDate)} — ${_fmtDate(trip.endDate)}',
-                    style: const TextStyle(
-                        color: AppTheme.textTertiary, fontSize: 12),
+                    'Trip bounds: ${_fmtDate(trip.startDate)} — ${_fmtDate(trip.endDate)}',
+                    style: const TextStyle(color: AppTheme.accent, fontSize: 12, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 20),
 
-                  _field(titleCtrl, 'Title *'),
+                  _field(titleCtrl, 'Activity Title *', Icons.title_rounded),
                   const SizedBox(height: 12),
-                  _field(descCtrl, 'Description'),
+                  _field(descCtrl, 'Description (optional)', Icons.notes_rounded),
                   const SizedBox(height: 12),
-                  _field(locationCtrl, 'Location *'),
+                  _field(locationCtrl, 'Location *', Icons.place_rounded),
                   const SizedBox(height: 12),
-                  _field(interestCtrl, 'Interest type (e.g. Nature)'),
+                  _field(interestCtrl, 'Category (e.g. Nature, Food)', Icons.category_rounded),
                   const SizedBox(height: 16),
 
-                  // Date-time pickers
                   _DateTimePicker(
                     label: 'Start time *',
                     value: startTime,
@@ -192,66 +220,58 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Error (backend's exact 400/409 message)
                   if (dialogError != null) ...[
                     Container(
-                      padding: const EdgeInsets.all(10),
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppTheme.error.withValues(alpha: 0.12),
-                        borderRadius:
-                            BorderRadius.circular(AppTheme.radiusSm),
-                        border: Border.all(
-                            color: AppTheme.error.withValues(alpha: 0.3)),
+                        color: AppTheme.error.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppTheme.error.withValues(alpha: 0.4)),
                       ),
-                      child: Text(dialogError!,
-                          style: const TextStyle(
-                              color: AppTheme.error, fontSize: 12)),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error_outline_rounded, color: AppTheme.error, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(child: Text(dialogError!, style: const TextStyle(color: AppTheme.error, fontSize: 12))),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                   ],
 
-                  // Submit
                   SizedBox(
-                    height: 46,
+                    height: 50,
                     child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                      ),
                       onPressed: () async {
-                        // Client-side validation
-                        if (titleCtrl.text.trim().isEmpty ||
-                            locationCtrl.text.trim().isEmpty) {
-                          setDialogState(() =>
-                              dialogError = 'Title and location are required.');
+                        if (titleCtrl.text.trim().isEmpty || locationCtrl.text.trim().isEmpty) {
+                          setDialogState(() => dialogError = 'Title and location are required.');
                           return;
                         }
                         if (startTime == null || endTime == null) {
-                          setDialogState(() =>
-                              dialogError = 'Select both start and end times.');
+                          setDialogState(() => dialogError = 'Select both start and end times.');
                           return;
                         }
 
-                        final err = await ref
-                            .read(activitiesProvider.notifier)
-                            .addActivity(
+                        final err = await ref.read(activitiesProvider.notifier).addActivity(
                               tripId: tripId,
                               title: titleCtrl.text.trim(),
-                              description: descCtrl.text.trim().isEmpty
-                                  ? null
-                                  : descCtrl.text.trim(),
+                              description: descCtrl.text.trim().isEmpty ? null : descCtrl.text.trim(),
                               startTime: startTime!,
                               endTime: endTime!,
                               location: locationCtrl.text.trim(),
-                              interestType: interestCtrl.text.trim().isEmpty
-                                  ? null
-                                  : interestCtrl.text.trim(),
+                              interestType: interestCtrl.text.trim().isEmpty ? null : interestCtrl.text.trim(),
                             );
 
                         if (err != null) {
-                          // Show the backend's exact error (400/409).
                           setDialogState(() => dialogError = err);
                         } else {
                           if (ctx.mounted) Navigator.of(ctx).pop();
                         }
                       },
-                      child: const Text('Add'),
+                      child: const Text('Add to Itinerary', style: TextStyle(fontWeight: FontWeight.w700)),
                     ),
                   ),
                 ],
@@ -263,28 +283,23 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
     );
   }
 
-  Widget _field(TextEditingController ctrl, String hint) {
+  Widget _field(TextEditingController ctrl, String hint, IconData icon) {
     return TextField(
       controller: ctrl,
       style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14),
       decoration: InputDecoration(
         hintText: hint,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        prefixIcon: Icon(icon, color: AppTheme.textTertiary, size: 20),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
     );
   }
 
   String _fmtDate(DateTime d) {
-    const m = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
+    const m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return '${d.day} ${m[d.month - 1]} ${d.year}';
   }
 }
-
-// ─────────────────────────────── Date-Time Picker ──
 
 class _DateTimePicker extends StatelessWidget {
   const _DateTimePicker({
@@ -311,9 +326,7 @@ class _DateTimePicker extends StatelessWidget {
           firstDate: firstDate.subtract(const Duration(days: 1)),
           lastDate: lastDate.add(const Duration(days: 1)),
           builder: (ctx, child) => Theme(
-            data: AppTheme.darkTheme.copyWith(
-              colorScheme: AppTheme.darkTheme.colorScheme,
-            ),
+            data: AppTheme.darkTheme.copyWith(colorScheme: AppTheme.darkTheme.colorScheme),
             child: child!,
           ),
         );
@@ -332,26 +345,24 @@ class _DateTimePicker extends StatelessWidget {
         onPicked(DateTime(date.year, date.month, date.day, time.hour, time.minute));
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: AppTheme.bgSurfaceVariant.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppTheme.glassBorder),
         ),
         child: Row(
           children: [
-            const Icon(Icons.access_time_rounded,
-                color: AppTheme.textTertiary, size: 16),
-            const SizedBox(width: 8),
+            const Icon(Icons.access_time_rounded, color: AppTheme.accent, size: 18),
+            const SizedBox(width: 10),
             Text(
               value != null
                   ? '${value!.day}/${value!.month}/${value!.year}  ${value!.hour.toString().padLeft(2, '0')}:${value!.minute.toString().padLeft(2, '0')}'
                   : label,
               style: TextStyle(
-                color: value != null
-                    ? AppTheme.textPrimary
-                    : AppTheme.textTertiary,
+                color: value != null ? AppTheme.textPrimary : AppTheme.textTertiary,
                 fontSize: 13,
+                fontWeight: value != null ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
           ],
@@ -360,8 +371,6 @@ class _DateTimePicker extends StatelessWidget {
     );
   }
 }
-
-// ─────────────────────────────── Timeline Item ──
 
 class _TimelineItem extends StatelessWidget {
   const _TimelineItem({required this.activity, required this.isLast});
@@ -374,29 +383,26 @@ class _TimelineItem extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Timeline gutter
           SizedBox(
-            width: 32,
+            width: 36,
             child: Column(
               children: [
                 Container(
-                  width: 10,
-                  height: 10,
+                  width: 14,
+                  height: 14,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: AppTheme.accent,
                     boxShadow: [
-                      BoxShadow(
-                          color: AppTheme.accent.withValues(alpha: 0.4),
-                          blurRadius: 6),
+                      BoxShadow(color: AppTheme.accent.withValues(alpha: 0.6), blurRadius: 10),
                     ],
                   ),
                 ),
                 if (!isLast)
                   Expanded(
                     child: Container(
-                      width: 1.5,
-                      color: AppTheme.accent.withValues(alpha: 0.2),
+                      width: 2,
+                      color: AppTheme.accent.withValues(alpha: 0.25),
                     ),
                   ),
               ],
@@ -404,71 +410,65 @@ class _TimelineItem extends StatelessWidget {
           ),
           const SizedBox(width: 8),
 
-          // Card
           Expanded(
             child: GlassContainer(
-              margin: const EdgeInsets.only(bottom: 16),
-              borderRadius: AppTheme.radiusSm,
-              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.only(bottom: 20),
+              borderRadius: 24,
+              padding: const EdgeInsets.all(18),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(activity.title,
-                      style: const TextStyle(
-                          color: AppTheme.textPrimary,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          activity.title,
+                          style: const TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      if (activity.interestType != null)
+                        GlassChip(
+                          label: activity.interestType!,
+                          accentColor: AppTheme.accent,
+                          isSelected: true,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Icon(Icons.access_time_rounded,
-                          color: AppTheme.textTertiary, size: 13),
-                      const SizedBox(width: 4),
+                      const Icon(Icons.access_time_rounded, color: AppTheme.accent, size: 14),
+                      const SizedBox(width: 6),
                       Text(
                         '${_fmtTime(activity.startTime)} — ${_fmtTime(activity.endTime)}',
-                        style: const TextStyle(
-                            color: AppTheme.textSecondary, fontSize: 12),
+                        style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
                       ),
                     ],
                   ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(Icons.location_on_outlined,
-                          color: AppTheme.textTertiary, size: 13),
-                      const SizedBox(width: 4),
+                      const Icon(Icons.location_on_rounded, color: AppTheme.textTertiary, size: 14),
+                      const SizedBox(width: 6),
                       Expanded(
-                        child: Text(activity.location,
-                            style: const TextStyle(
-                                color: AppTheme.textSecondary, fontSize: 12),
-                            overflow: TextOverflow.ellipsis),
+                        child: Text(
+                          activity.location,
+                          style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ],
                   ),
-                  if (activity.interestType != null) ...[
-                    const SizedBox(height: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: AppTheme.accent.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(activity.interestType!,
-                          style: const TextStyle(
-                              color: AppTheme.accent,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600)),
+                  if (activity.description != null && activity.description!.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      activity.description!,
+                      style: const TextStyle(color: AppTheme.textTertiary, fontSize: 12),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ],
-                  if (activity.description != null &&
-                      activity.description!.isNotEmpty) ...[
-                    const SizedBox(height: 6),
-                    Text(activity.description!,
-                        style: const TextStyle(
-                            color: AppTheme.textTertiary, fontSize: 12),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis),
                   ],
                 ],
               ),
@@ -479,6 +479,5 @@ class _TimelineItem extends StatelessWidget {
     );
   }
 
-  String _fmtTime(DateTime dt) =>
-      '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+  String _fmtTime(DateTime dt) => '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
 }

@@ -5,14 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers/readiness_provider.dart';
 import '../../core/providers/trips_provider.dart';
+import '../glass/glass_chip.dart';
 import '../glass/glass_container.dart';
 import '../theme/app_theme.dart';
 
-/// Readiness screen — document checklist with a circular 0–100% score.
-///
-/// Fetches `GET api/Readiness?tripId=`. Each document shows type, number,
-/// expiry, and verified status. The overall readiness score is computed as
-/// the percentage of documents that are both verified AND not expired.
+/// Redesigned Readiness Screen featuring a circular 0-100% dial inside
+/// an Apple Liquid Glass sphere, and glass checkable list tiles.
 class ReadinessScreen extends ConsumerStatefulWidget {
   const ReadinessScreen({super.key});
 
@@ -33,32 +31,53 @@ class _ReadinessScreenState extends ConsumerState<ReadinessScreen> {
     final readState = ref.watch(readinessProvider);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ── Trip selector ─────────────────────────────────────
+          const Text(
+            'Trip Readiness',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.textPrimary,
+              letterSpacing: -0.8,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Document verification & preparation checklist',
+            style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+          ),
+          const SizedBox(height: 20),
+
+          // ── Trip selector dropdown ─────────────────────────────
           GlassContainer(
-            borderRadius: AppTheme.radiusSm,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            borderRadius: 24,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<int>(
                 value: readState.selectedTripId,
-                hint: const Text('Select a trip',
-                    style: TextStyle(color: AppTheme.textTertiary)),
+                hint: Row(
+                  children: const [
+                    Icon(Icons.checklist_rounded, color: AppTheme.accent, size: 20),
+                    SizedBox(width: 10),
+                    Text('Select a trip destination', style: TextStyle(color: AppTheme.textTertiary, fontSize: 14)),
+                  ],
+                ),
                 dropdownColor: AppTheme.bgSurface,
                 iconEnabledColor: AppTheme.accent,
                 isExpanded: true,
-                style: const TextStyle(color: AppTheme.textPrimary),
+                style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w600, fontSize: 15),
                 items: tripsState.trips
                     .map((t) => DropdownMenuItem(
-                        value: t.id, child: Text(t.destination)))
+                          value: t.id,
+                          child: Text(t.destination),
+                        ))
                     .toList(),
                 onChanged: (tripId) {
                   if (tripId != null) {
-                    ref
-                        .read(readinessProvider.notifier)
-                        .fetchDocuments(tripId);
+                    ref.read(readinessProvider.notifier).fetchDocuments(tripId);
                   }
                 },
               ),
@@ -69,47 +88,61 @@ class _ReadinessScreenState extends ConsumerState<ReadinessScreen> {
           if (readState.isLoading)
             const Padding(
               padding: EdgeInsets.only(top: 48),
-              child: Center(
-                  child:
-                      CircularProgressIndicator(color: AppTheme.accent)),
+              child: Center(child: CircularProgressIndicator(color: AppTheme.accent)),
             )
           else if (readState.errorMessage != null)
             GlassContainer(
-              borderRadius: AppTheme.radiusMd,
+              borderRadius: 20,
               padding: const EdgeInsets.all(16),
+              borderColor: AppTheme.error.withValues(alpha: 0.4),
               child: Row(children: [
-                const Icon(Icons.error_outline_rounded,
-                    color: AppTheme.error, size: 20),
+                const Icon(Icons.error_outline_rounded, color: AppTheme.error, size: 20),
                 const SizedBox(width: 10),
-                Expanded(
-                    child: Text(readState.errorMessage!,
-                        style: const TextStyle(
-                            color: AppTheme.error, fontSize: 13))),
+                Expanded(child: Text(readState.errorMessage!, style: const TextStyle(color: AppTheme.error, fontSize: 13))),
               ]),
             )
           else if (readState.selectedTripId != null) ...[
-            // ── Circular score ──────────────────────────────────
+            // ── Glowing Liquid Glass Sphere Circular Score ──────────
             Center(
-              child: _CircularScore(score: readState.readinessScore),
+              child: _GlowingGlassScoreSphere(score: readState.readinessScore),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 28),
+
+            const Text(
+              'Required Documents',
+              style: TextStyle(color: AppTheme.textPrimary, fontSize: 18, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 12),
 
             // ── Document checklist ──────────────────────────────
             if (readState.documents.isEmpty)
-              const Center(
-                child: Text('No documents found for this trip',
-                    style: TextStyle(
-                        color: AppTheme.textSecondary, fontSize: 14)),
+              Padding(
+                padding: const EdgeInsets.only(top: 24),
+                child: GlassContainer(
+                  borderRadius: 20,
+                  padding: const EdgeInsets.all(24),
+                  child: const Center(
+                    child: Text('No travel documents attached to this trip',
+                        style: TextStyle(color: AppTheme.textSecondary, fontSize: 14)),
+                  ),
+                ),
               )
             else
               ...readState.documents.map((d) => _DocumentTile(doc: d)),
           ] else
-            const Padding(
-              padding: EdgeInsets.only(top: 48),
-              child: Center(
-                child: Text('Select a trip to view readiness',
-                    style: TextStyle(
-                        color: AppTheme.textSecondary, fontSize: 15)),
+            Padding(
+              padding: const EdgeInsets.only(top: 48),
+              child: GlassContainer(
+                borderRadius: 24,
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  children: const [
+                    Icon(Icons.assignment_outlined, size: 48, color: AppTheme.textTertiary),
+                    SizedBox(height: 12),
+                    Text('Select a trip above to verify travel readiness score',
+                        style: TextStyle(color: AppTheme.textSecondary, fontSize: 14)),
+                  ],
+                ),
               ),
             ),
         ],
@@ -118,10 +151,8 @@ class _ReadinessScreenState extends ConsumerState<ReadinessScreen> {
   }
 }
 
-// ─────────────────────────────── Circular Score ──
-
-class _CircularScore extends StatelessWidget {
-  const _CircularScore({required this.score});
+class _GlowingGlassScoreSphere extends StatelessWidget {
+  const _GlowingGlassScoreSphere({required this.score});
   final int score;
 
   @override
@@ -133,10 +164,11 @@ class _CircularScore extends StatelessWidget {
             : AppTheme.error;
 
     return GlassContainer(
-      borderRadius: 70,
-      width: 140,
-      height: 140,
-      padding: EdgeInsets.zero,
+      borderRadius: 90,
+      width: 180,
+      height: 180,
+      borderColor: color.withValues(alpha: 0.4),
+      tintColor: color.withValues(alpha: 0.08),
       child: CustomPaint(
         painter: _RingPainter(progress: score / 100, color: color),
         child: Center(
@@ -147,13 +179,18 @@ class _CircularScore extends StatelessWidget {
                 '$score%',
                 style: TextStyle(
                   color: color,
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 36,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -1,
                 ),
               ),
-              const Text('Ready',
-                  style: TextStyle(
-                      color: AppTheme.textTertiary, fontSize: 11)),
+              const SizedBox(height: 2),
+              GlassChip(
+                label: score >= 80 ? 'READY TO FLY' : 'INCOMPLETE',
+                accentColor: color,
+                isSelected: true,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              ),
             ],
           ),
         ),
@@ -170,15 +207,15 @@ class _RingPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2 - 12;
-    const strokeWidth = 6.0;
+    final radius = size.width / 2 - 16;
+    const strokeWidth = 8.0;
 
-    // Background ring
+    // Background track
     canvas.drawCircle(
       center,
       radius,
       Paint()
-        ..color = Colors.white.withValues(alpha: 0.06)
+        ..color = Colors.white.withValues(alpha: 0.08)
         ..style = PaintingStyle.stroke
         ..strokeWidth = strokeWidth,
     );
@@ -198,11 +235,8 @@ class _RingPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_RingPainter old) =>
-      old.progress != progress || old.color != color;
+  bool shouldRepaint(_RingPainter old) => old.progress != progress || old.color != color;
 }
-
-// ─────────────────────────────── Document Tile ──
 
 class _DocumentTile extends StatelessWidget {
   const _DocumentTile({required this.doc});
@@ -212,8 +246,7 @@ class _DocumentTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final isOk = doc.isVerified && !doc.isExpired;
     final statusColor = isOk ? AppTheme.success : AppTheme.error;
-    final statusIcon =
-        isOk ? Icons.check_circle_rounded : Icons.cancel_rounded;
+    final statusIcon = isOk ? Icons.check_circle_rounded : Icons.cancel_rounded;
     final statusText = doc.isExpired
         ? 'Expired'
         : doc.isVerified
@@ -222,35 +255,39 @@ class _DocumentTile extends StatelessWidget {
 
     return GlassContainer(
       margin: const EdgeInsets.only(bottom: 12),
-      borderRadius: AppTheme.radiusSm,
+      borderRadius: 20,
       padding: const EdgeInsets.all(16),
+      borderColor: statusColor.withValues(alpha: 0.25),
       child: Row(
         children: [
-          // Status icon
-          Icon(statusIcon, color: statusColor, size: 22),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: statusColor.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(statusIcon, color: statusColor, size: 20),
+          ),
           const SizedBox(width: 14),
 
-          // Details
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(doc.documentType,
-                    style: const TextStyle(
-                        color: AppTheme.textPrimary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600)),
+                Text(
+                  doc.documentType,
+                  style: const TextStyle(color: AppTheme.textPrimary, fontSize: 15, fontWeight: FontWeight.w700),
+                ),
                 const SizedBox(height: 4),
-                Text(doc.documentNumber,
-                    style: const TextStyle(
-                        color: AppTheme.textSecondary, fontSize: 12)),
+                Text(
+                  doc.documentNumber,
+                  style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                ),
                 const SizedBox(height: 2),
                 Text(
                   'Expires: ${doc.expiryDate.day}/${doc.expiryDate.month}/${doc.expiryDate.year}',
                   style: TextStyle(
-                    color: doc.isExpired
-                        ? AppTheme.error
-                        : AppTheme.textTertiary,
+                    color: doc.isExpired ? AppTheme.error : AppTheme.textTertiary,
                     fontSize: 11,
                   ),
                 ),
@@ -258,20 +295,10 @@ class _DocumentTile extends StatelessWidget {
             ),
           ),
 
-          // Status chip
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(
-                  color: statusColor.withValues(alpha: 0.4), width: 0.5),
-            ),
-            child: Text(statusText,
-                style: TextStyle(
-                    color: statusColor,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600)),
+          GlassChip(
+            label: statusText,
+            accentColor: statusColor,
+            isSelected: true,
           ),
         ],
       ),

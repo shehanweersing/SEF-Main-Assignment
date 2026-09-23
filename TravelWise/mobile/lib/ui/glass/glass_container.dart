@@ -70,8 +70,8 @@ class GlassContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveTint = tintColor ?? Colors.white.withValues(alpha: 0.06);
-    final effectiveBorder = borderColor ?? Colors.white.withValues(alpha: 0.12);
+    final effectiveTint = tintColor ?? Colors.white.withValues(alpha: 0.08);
+    final effectiveBorder = borderColor ?? Colors.white.withValues(alpha: 0.18);
 
     return Padding(
       padding: margin,
@@ -93,12 +93,18 @@ class GlassContainer extends StatelessWidget {
                 color: effectiveBorder,
                 width: borderWidth,
               ),
-              // Subtle inner glow for depth
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.18),
-                  blurRadius: 24,
-                  offset: const Offset(0, 8),
+                  color: Colors.black.withValues(alpha: 0.22),
+                  blurRadius: 30,
+                  spreadRadius: -2,
+                  offset: const Offset(0, 10),
+                ),
+                BoxShadow(
+                  color: Colors.white.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  spreadRadius: 1,
+                  offset: const Offset(-2, -2),
                 ),
               ],
             ),
