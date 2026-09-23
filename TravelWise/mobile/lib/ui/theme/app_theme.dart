@@ -98,7 +98,7 @@ abstract final class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: bgSurfaceVariant.withOpacity(0.5),
+        fillColor: bgSurfaceVariant.withValues(alpha: 0.5),
         hintStyle: const TextStyle(color: textTertiary),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 20, vertical: 16),

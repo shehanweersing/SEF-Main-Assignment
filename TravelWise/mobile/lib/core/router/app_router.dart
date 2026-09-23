@@ -3,8 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../auth/auth_notifier.dart';
+import '../network/dio_client.dart';
 import '../../ui/screens/login_screen.dart';
 import '../../ui/screens/register_screen.dart';
+import '../../ui/screens/trips_screen.dart';
+import '../../ui/screens/budget_screen.dart';
+import '../../ui/screens/activity_screen.dart';
+import '../../ui/screens/risk_screen.dart';
+import '../../ui/screens/readiness_screen.dart';
+import '../../ui/screens/approval_screen.dart';
 import '../../ui/shell/app_shell.dart';
 
 /// GoRouter provider with auth-based redirect guard.
@@ -14,11 +21,12 @@ import '../../ui/shell/app_shell.dart';
 /// /login        → LoginScreen
 /// /register     → RegisterScreen
 /// /             → AppShell (authenticated, bottom-nav)
-///   ├ /trips        → placeholder
-///   ├ /budget       → placeholder
-///   ├ /activities   → placeholder
-///   ├ /risk         → placeholder
-///   └ /readiness    → placeholder
+///   ├ /trips        → TripsScreen
+///   ├ /budget       → BudgetScreen
+///   ├ /activities   → ActivityScreen
+///   ├ /risk         → RiskScreen
+///   ├ /readiness    → ReadinessScreen
+///   └ /approvals    → ApprovalScreen
 /// ```
 final goRouterProvider = Provider<GoRouter>((ref) {
   // Watch auth state so routes recalculate on login / logout.
@@ -27,6 +35,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/login',
     debugLogDiagnostics: true,
+
+    // Listen to the 401 notifier from the Dio interceptor so the router
+    // can redirect without a circular provider dependency.
+    refreshListenable: unauthorizedNotifier,
 
     // ── Auth redirect guard ──────────────────────────────────────
     redirect: (BuildContext context, GoRouterState state) {
@@ -64,49 +76,30 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/trips',
-            builder: (context, state) => const _Placeholder(label: 'Trips'),
+            builder: (context, state) => const TripsScreen(),
           ),
           GoRoute(
             path: '/budget',
-            builder: (context, state) => const _Placeholder(label: 'Budget'),
+            builder: (context, state) => const BudgetScreen(),
           ),
           GoRoute(
             path: '/activities',
-            builder: (context, state) =>
-                const _Placeholder(label: 'Activities'),
+            builder: (context, state) => const ActivityScreen(),
           ),
           GoRoute(
             path: '/risk',
-            builder: (context, state) =>
-                const _Placeholder(label: 'Risk Assessment'),
+            builder: (context, state) => const RiskScreen(),
           ),
           GoRoute(
             path: '/readiness',
-            builder: (context, state) =>
-                const _Placeholder(label: 'Readiness'),
+            builder: (context, state) => const ReadinessScreen(),
+          ),
+          GoRoute(
+            path: '/approvals',
+            builder: (context, state) => const ApprovalScreen(),
           ),
         ],
       ),
     ],
   );
 });
-
-// ─────────────────────────────── Placeholder (Part 2 will replace) ──
-
-class _Placeholder extends StatelessWidget {
-  const _Placeholder({required this.label});
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
-              fontWeight: FontWeight.w300,
-            ),
-      ),
-    );
-  }
-}

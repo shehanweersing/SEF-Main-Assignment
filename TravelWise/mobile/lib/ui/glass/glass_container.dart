@@ -15,7 +15,7 @@ import 'package:flutter/material.dart';
 /// ```dart
 /// GlassContainer(
 ///   blurSigma: 24,
-///   tintColor: Colors.white.withOpacity(0.06),
+///   tintColor: Colors.white.withValues(alpha: 0.06),
 ///   borderRadius: 24,
 ///   padding: EdgeInsets.all(20),
 ///   child: Text('Hello, glass!'),
@@ -70,8 +70,8 @@ class GlassContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveTint = tintColor ?? Colors.white.withOpacity(0.06);
-    final effectiveBorder = borderColor ?? Colors.white.withOpacity(0.12);
+    final effectiveTint = tintColor ?? Colors.white.withValues(alpha: 0.06);
+    final effectiveBorder = borderColor ?? Colors.white.withValues(alpha: 0.12);
 
     return Padding(
       padding: margin,
@@ -96,7 +96,7 @@ class GlassContainer extends StatelessWidget {
               // Subtle inner glow for depth
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.18),
+                  color: Colors.black.withValues(alpha: 0.18),
                   blurRadius: 24,
                   offset: const Offset(0, 8),
                 ),

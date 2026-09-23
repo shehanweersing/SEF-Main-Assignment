@@ -30,6 +30,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     _NavItem(icon: Icons.local_activity_rounded, label: 'Activities', path: '/activities'),
     _NavItem(icon: Icons.shield_rounded, label: 'Risk', path: '/risk'),
     _NavItem(icon: Icons.checklist_rounded, label: 'Readiness', path: '/readiness'),
+    _NavItem(icon: Icons.approval_rounded, label: 'Approvals', path: '/approvals'),
   ];
 
   int _currentIndex = 0;
@@ -105,10 +106,10 @@ class _AppShellState extends ConsumerState<AppShell> {
           filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.06),
+              color: Colors.white.withValues(alpha: 0.06),
               border: Border(
                 top: BorderSide(
-                  color: Colors.white.withOpacity(0.08),
+                  color: Colors.white.withValues(alpha: 0.08),
                   width: 0.5,
                 ),
               ),
@@ -172,7 +173,7 @@ class _GlassNavButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: isActive
-              ? AppTheme.accent.withOpacity(0.12)
+              ? AppTheme.accent.withValues(alpha: 0.12)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(14),
         ),

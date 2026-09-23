@@ -61,8 +61,8 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveTint = tintColor ?? Colors.white.withOpacity(0.06);
-    final effectiveBorder = borderColor ?? Colors.white.withOpacity(0.08);
+    final effectiveTint = tintColor ?? Colors.white.withValues(alpha: 0.06);
+    final effectiveBorder = borderColor ?? Colors.white.withValues(alpha: 0.08);
 
     return ClipRect(
       child: BackdropFilter(

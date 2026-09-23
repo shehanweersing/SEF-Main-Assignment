@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
     // Check your backend terminal for the correct localhost port (usually 5000, 5001, or 7000+)
-    baseURL: 'http://localhost:5200/api', 
+    baseURL: 'http://localhost:5147/api', 
 });
 
 // 1. Request Interceptor: Attach the token

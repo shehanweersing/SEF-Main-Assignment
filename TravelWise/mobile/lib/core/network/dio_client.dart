@@ -7,8 +7,6 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import '../router/app_router.dart';
-
 /// Key used to persist the JWT in secure storage.
 const String kTokenStorageKey = 'auth_token';
 
@@ -16,6 +14,12 @@ const String kTokenStorageKey = 'auth_token';
 final secureStorageProvider = Provider<FlutterSecureStorage>(
   (ref) => const FlutterSecureStorage(),
 );
+
+/// A global [ValueNotifier] that fires when a 401 is received.
+///
+/// The router listens to this to navigate to `/login`, breaking the
+/// circular dependency between dioProvider ↔ goRouterProvider ↔ authProvider.
+final unauthorizedNotifier = ValueNotifier<int>(0);
 
 /// Dio singleton provider with auth & error interceptors.
 ///
@@ -26,13 +30,14 @@ final secureStorageProvider = Provider<FlutterSecureStorage>(
 ///
 /// ### Interceptors
 /// - **Request**: attaches `Authorization: Bearer <token>` from secure storage.
-/// - **Response**: on 401, clears the stored token and redirects to `/login`.
+/// - **Response**: on 401, clears the stored token and signals via
+///   [unauthorizedNotifier]. The router listens to this independently.
 ///
 /// ### Dev SSL (Correction #2)
 /// In debug mode, `badCertificateCallback` accepts all certificates so
 /// self-signed ASP.NET dev certs do not trigger `HandshakeException`.
 final dioProvider = Provider<Dio>((ref) {
-  final baseUrl = dotenv.env['API_BASE_URL'] ?? 'http://10.0.2.2:5135/api';
+  final baseUrl = dotenv.env['API_BASE_URL'] ?? 'http://localhost:5147/api';
   final storage = ref.read(secureStorageProvider);
 
   final dio = Dio(BaseOptions(
@@ -49,7 +54,8 @@ final dioProvider = Provider<Dio>((ref) {
   if (!kReleaseMode) {
     final adapter = dio.httpClientAdapter;
     if (adapter is IOHttpClientAdapter) {
-      adapter.onHttpClientCreate = (client) {
+      adapter.createHttpClient = () {
+        final client = HttpClient();
         client.badCertificateCallback = (cert, host, port) => true;
         return client;
       };
@@ -72,10 +78,9 @@ final dioProvider = Provider<Dio>((ref) {
         // Clear stale / revoked token
         await storage.delete(key: kTokenStorageKey);
 
-        // Navigate to login — the router redirect guard will also catch
-        // the null-token state, but this gives immediate feedback.
-        final router = ref.read(goRouterProvider);
-        router.go('/login');
+        // Signal the router to redirect to /login.
+        // Using a ValueNotifier breaks the provider cycle.
+        unauthorizedNotifier.value++;
       }
       handler.next(error);
     },

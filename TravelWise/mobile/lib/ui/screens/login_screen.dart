@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/auth/auth_notifier.dart';
-import '../../core/auth/auth_state.dart';
 import '../glass/glass_container.dart';
 import '../theme/app_theme.dart';
 
@@ -97,7 +96,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           borderRadius: BorderRadius.circular(22),
                           boxShadow: [
                             BoxShadow(
-                              color: AppTheme.accent.withOpacity(0.35),
+                              color: AppTheme.accent.withValues(alpha: 0.35),
                               blurRadius: 28,
                               offset: const Offset(0, 8),
                             ),
@@ -205,11 +204,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.error.withOpacity(0.12),
+                                  color: AppTheme.error.withValues(alpha: 0.12),
                                   borderRadius:
                                       BorderRadius.circular(AppTheme.radiusSm),
                                   border: Border.all(
-                                      color: AppTheme.error.withOpacity(0.3)),
+                                      color: AppTheme.error.withValues(alpha: 0.3)),
                                 ),
                                 child: Row(
                                   children: [

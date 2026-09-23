@@ -113,7 +113,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: AppTheme.accent.withOpacity(0.30),
+                              color: AppTheme.accent.withValues(alpha: 0.30),
                               blurRadius: 24,
                               offset: const Offset(0, 8),
                             ),
@@ -277,11 +277,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.error.withOpacity(0.12),
+                                  color: AppTheme.error.withValues(alpha: 0.12),
                                   borderRadius:
                                       BorderRadius.circular(AppTheme.radiusSm),
                                   border: Border.all(
-                                      color: AppTheme.error.withOpacity(0.3)),
+                                      color: AppTheme.error.withValues(alpha: 0.3)),
                                 ),
                                 child: Row(
                                   children: [
