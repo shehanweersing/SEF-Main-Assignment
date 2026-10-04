@@ -51,6 +51,17 @@ export const tripApi = {
   remove: (id) => axiosInstance.delete(`/Trip/${id}`),
 }
 
+export const collaborationApi = {
+  listMembers: (tripId) => axiosInstance.get(`/trips/${tripId}/members`),
+  inviteMember: (tripId, payload) => axiosInstance.post(`/trips/${tripId}/members/invite`, payload),
+  changeMemberRole: (tripId, userId, payload) => axiosInstance.put(`/trips/${tripId}/members/${userId}/role`, payload),
+  removeMember: (tripId, userId) => axiosInstance.delete(`/trips/${tripId}/members/${userId}`),
+  savePreference: (tripId, payload) => axiosInstance.post(`/trips/${tripId}/preferences`, payload),
+  vote: (tripId, activityId, payload) => axiosInstance.post(`/trips/${tripId}/activities/${activityId}/vote`, payload),
+  resolveConsensus: (tripId) => axiosInstance.post(`/trips/${tripId}/resolve-consensus`, {}),
+  getConsensusReport: (tripId) => axiosInstance.get(`/trips/${tripId}/consensus-report`),
+}
+
 export async function getOrCreateTrip(userId) {
   const { data: trips } = await tripApi.list(userId)
   if (trips.length) return trips[0]
