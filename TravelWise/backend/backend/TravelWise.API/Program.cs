@@ -52,6 +52,7 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddScoped<ActivityService>();
 builder.Services.AddScoped<RiskService>();
 builder.Services.AddScoped<ReadinessService>();
+builder.Services.AddScoped<ICollaborationService, CollaborationService>();
 builder.Services.AddHttpClient<WeatherTelemetryService>(client => client.Timeout = TimeSpan.FromSeconds(5));
 
 // JWT Authentication Configuration

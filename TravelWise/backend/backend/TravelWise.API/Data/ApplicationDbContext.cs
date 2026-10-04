@@ -19,6 +19,11 @@ namespace TravelWise.API.Data
         public DbSet<Activity> Activities { get; set; }
         public DbSet<RiskAssessment> RiskAssessments { get; set; }
         public DbSet<TravelDocument> TravelDocuments { get; set; }
+        public DbSet<TripMember> TripMembers { get; set; }
+        public DbSet<Invitation> Invitations { get; set; }
+        public DbSet<MemberPreference> MemberPreferences { get; set; }
+        public DbSet<Vote> Votes { get; set; }
+        public DbSet<ConsensusRecord> ConsensusRecords { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -26,6 +31,18 @@ namespace TravelWise.API.Data
             // Ensure emails are unique
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.Email)
+                .IsUnique();
+
+            modelBuilder.Entity<TripMember>()
+                .HasIndex(m => new { m.TripId, m.UserId })
+                .IsUnique();
+
+            modelBuilder.Entity<MemberPreference>()
+                .HasIndex(p => new { p.TripId, p.UserId, p.Category })
+                .IsUnique();
+
+            modelBuilder.Entity<Vote>()
+                .HasIndex(v => new { v.ActivityId, v.UserId })
                 .IsUnique();
         }
     }

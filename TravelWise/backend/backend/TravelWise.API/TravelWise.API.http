@@ -1,6 +1,63 @@
 @TravelWise.API_HostAddress = http://localhost:5147
+@tripId = 1
+@activityId = 1
+@memberUserId = 2
+@token = replace-with-jwt
 
-GET {{TravelWise.API_HostAddress}}/weatherforecast/
-Accept: application/json
+### List trip members
+GET {{TravelWise.API_HostAddress}}/api/trips/{{tripId}}/members
+Authorization: Bearer {{token}}
 
-###
+### Invite a member (invitation expires in seven days)
+POST {{TravelWise.API_HostAddress}}/api/trips/{{tripId}}/members/invite
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "invitedEmail": "traveller@example.com"
+}
+
+### Change a member role
+PUT {{TravelWise.API_HostAddress}}/api/trips/{{tripId}}/members/{{memberUserId}}/role
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "role": "Editor"
+}
+
+### Remove a member
+DELETE {{TravelWise.API_HostAddress}}/api/trips/{{tripId}}/members/{{memberUserId}}
+Authorization: Bearer {{token}}
+
+### Submit or replace a preference
+POST {{TravelWise.API_HostAddress}}/api/trips/{{tripId}}/preferences
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "category": "Nature",
+  "weight": 5,
+  "notes": "Prefer outdoor activities"
+}
+
+### Vote once on an activity
+POST {{TravelWise.API_HostAddress}}/api/trips/{{tripId}}/activities/{{activityId}}/vote
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "voteType": "Upvote",
+  "comment": "This fits the group itinerary"
+}
+
+### Resolve consensus (requires at least 60% member participation)
+POST {{TravelWise.API_HostAddress}}/api/trips/{{tripId}}/resolve-consensus
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{}
+
+### Get the latest consensus report
+GET {{TravelWise.API_HostAddress}}/api/trips/{{tripId}}/consensus-report
+Authorization: Bearer {{token}}
