@@ -62,6 +62,12 @@ export const collaborationApi = {
   getConsensusReport: (tripId) => axiosInstance.get(`/trips/${tripId}/consensus-report`),
 }
 
+export const notificationApi = {
+  list: () => axiosInstance.get('/notifications'),
+  acceptInvitation: (id) => axiosInstance.post(`/notifications/${id}/accept`),
+  leaveInvitation: (id) => axiosInstance.post(`/notifications/${id}/leave`),
+}
+
 export async function getOrCreateTrip(userId) {
   const { data: trips } = await tripApi.list(userId)
   if (trips.length) return trips[0]

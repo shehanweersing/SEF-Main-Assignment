@@ -18,9 +18,14 @@ public interface ICollaborationService
     Task<ConsensusResponse?> GetConsensusReportAsync(int tripId, int userId, CancellationToken cancellationToken);
 }
 
-public sealed class CollaborationService(ApplicationDbContext context) : ICollaborationService
+public sealed class CollaborationService(
+    ApplicationDbContext context,
+    IEmailSender emailSender,
+    IConfiguration configuration) : ICollaborationService
 {
     private readonly ApplicationDbContext _context = context;
+    private readonly IEmailSender _emailSender = emailSender;
+    private readonly IConfiguration _configuration = configuration;
 
     public async Task<IReadOnlyList<TripMemberResponse>?> GetMembersAsync(int tripId, int userId, CancellationToken cancellationToken)
     {
@@ -58,28 +63,35 @@ public sealed class CollaborationService(ApplicationDbContext context) : ICollab
         if (invitedUser is not null && await IsMemberAsync(trip, invitedUser.Id, cancellationToken))
             return (null, "That user is already a member of the trip.");
 
-        _context.Invitations.Add(new Invitation
+        var invitation = new Invitation
         {
             TripId = tripId,
             InvitedEmail = email,
             Token = Guid.NewGuid().ToString("N"),
             ExpiresAt = DateTime.UtcNow.AddDays(7),
             Status = "Pending"
-        });
+        };
+        _context.Invitations.Add(invitation);
 
         if (invitedUser is not null)
         {
-            _context.TripMembers.Add(new TripMember
+            _context.Notifications.Add(new Notification
             {
-                TripId = tripId,
                 UserId = invitedUser.Id,
-                Role = "Viewer",
-                JoinedAt = DateTime.UtcNow,
-                Status = "Joined"
+                TripId = tripId,
+                Invitation = invitation,
+                Message = $"You have been invited to collaborate on the {trip.Destination} trip.",
+                IsRead = false
             });
         }
 
         await _context.SaveChangesAsync(cancellationToken);
+        var frontendUrl = _configuration["Frontend:BaseUrl"]?.TrimEnd('/') ?? "http://localhost:5173";
+        await _emailSender.SendTripInvitationAsync(
+            email,
+            trip.Destination,
+            $"{frontendUrl}/dashboard/collaboration?invitation={invitation.Token}",
+            cancellationToken);
 
         if (invitedUser is null)
             return (new TripMemberResponse(0, string.Empty, email, "Viewer", DateTimeOffset.UtcNow, "Pending"), null);

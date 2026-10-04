@@ -15,7 +15,12 @@ function decodeRole(token) {
 function decodeUserId(token) {
   try {
     const payload = JSON.parse(atob(token.split('.')[1]))
-    return Number(payload.nameid || payload.sub)
+    const claim = payload.nameid
+      || payload.sub
+      || payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier']
+      || payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/nameidentifier']
+    const userId = Number(claim)
+    return Number.isInteger(userId) && userId > 0 ? userId : null
   } catch {
     return null
   }

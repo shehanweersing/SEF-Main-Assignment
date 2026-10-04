@@ -53,6 +53,8 @@ builder.Services.AddScoped<ActivityService>();
 builder.Services.AddScoped<RiskService>();
 builder.Services.AddScoped<ReadinessService>();
 builder.Services.AddScoped<ICollaborationService, CollaborationService>();
+builder.Services.AddScoped<IEmailSender, EmailSender>();
+builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection("Email"));
 builder.Services.AddHttpClient<WeatherTelemetryService>(client => client.Timeout = TimeSpan.FromSeconds(5));
 
 // JWT Authentication Configuration

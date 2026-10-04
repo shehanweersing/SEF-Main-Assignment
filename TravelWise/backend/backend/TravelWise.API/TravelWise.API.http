@@ -17,6 +17,18 @@ Content-Type: application/json
   "invitedEmail": "traveller@example.com"
 }
 
+### List notifications for the signed-in user
+GET {{TravelWise.API_HostAddress}}/api/notifications
+Authorization: Bearer {{token}}
+
+### Accept an invitation notification
+POST {{TravelWise.API_HostAddress}}/api/notifications/1/accept
+Authorization: Bearer {{token}}
+
+### Leave an invitation notification
+POST {{TravelWise.API_HostAddress}}/api/notifications/1/leave
+Authorization: Bearer {{token}}
+
 ### Change a member role
 PUT {{TravelWise.API_HostAddress}}/api/trips/{{tripId}}/members/{{memberUserId}}/role
 Authorization: Bearer {{token}}

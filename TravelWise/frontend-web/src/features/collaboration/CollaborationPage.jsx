@@ -4,6 +4,7 @@ import { activityApi, collaborationApi, getOrCreateTrip } from '../../api/travel
 import { useAuth } from '../../context/AuthContext'
 
 function errorMessage(error, fallback) {
+  if (!error.response) return 'The TravelWise API is unavailable. Start the backend on http://localhost:5147 and refresh this page.'
   const data = error.response?.data
   return typeof data === 'string' ? data : data?.detail || data?.title || data?.message || fallback
 }
@@ -50,7 +51,8 @@ export default function CollaborationPage() {
         setReport(null)
       }
     } catch (requestError) {
-      setError(errorMessage(requestError, 'Could not load collaboration details.'))
+      const endpoint = requestError.config?.url ? ` (${requestError.config.url})` : ''
+      setError(`${errorMessage(requestError, 'Could not load collaboration details.')}${endpoint}`)
     } finally {
       setLoading(false)
     }
