@@ -12,3 +12,12 @@ export async function createTrip(tripData) {
   const { data } = await api.post('/Trip', tripData)
   return data
 }
+
+export async function updateTrip(id, tripData) {
+  const { data } = await api.put(`/Trip/${id}`, tripData)
+  return data
+}
+
+export async function deleteTrip(id) {
+  return api.delete(`/Trip/${id}`)
+}

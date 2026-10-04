@@ -1,5 +1,5 @@
-import { CalendarDays, LoaderCircle, MapPin, X } from 'lucide-react'
-import { useState } from 'react'
+import { CalendarDays, LoaderCircle, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -29,11 +29,14 @@ function getApiMessage(error) {
   return 'Could not save this activity. Check your connection and try again.'
 }
 
-export default function ActivityForm({ selectedTrip, onSubmit, onCancel }) {
+export default function ActivityForm({ selectedTrip, activity, onSubmit, onCancel }) {
   const [serverError, setServerError] = useState('')
   const tripStart = toLocalInput(selectedTrip?.startDate)
   const tripEnd = toLocalInput(selectedTrip?.endDate)
-  const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } = useForm({ resolver: zodResolver(activityFormSchema), defaultValues: { startTime: tripStart, endTime: tripEnd } })
+  const { register, handleSubmit, setValue, watch, reset, formState: { errors, isSubmitting } } = useForm({ resolver: zodResolver(activityFormSchema), defaultValues: { startTime: tripStart, endTime: tripEnd } })
+  useEffect(() => {
+    reset(activity ? { title: activity.title, location: activity.location, startTime: toLocalInput(activity.startTime), endTime: toLocalInput(activity.endTime) } : { startTime: tripStart, endTime: tripEnd })
+  }, [activity, tripStart, tripEnd, reset])
   const location = watch('location', '')
 
   async function submit(values) {
@@ -45,5 +48,5 @@ export default function ActivityForm({ selectedTrip, onSubmit, onCancel }) {
     }
   }
 
-  return <form className="inline-form activity-form" onSubmit={handleSubmit(submit)} noValidate><div className="activity-form-heading"><span className="eyebrow">{selectedTrip ? `Inside ${selectedTrip.destination}` : 'Schedule activity'}</span>{onCancel && <button type="button" className="icon-button" onClick={onCancel} title="Close form"><X size={16} /></button>}</div><label>Title<input {...register('title')} placeholder="Activity name" />{errors.title && <small className="field-error">{errors.title.message}</small>}</label><label className="location-form-label">Location<LocationField label="Activity location" value={location} onChange={(value) => setValue('location', value, { shouldValidate: true })} placeholder="Search Google Maps" />{errors.location && <small className="field-error">{errors.location.message}</small>}</label><label>Start<div className="trip-input"><CalendarDays size={15} /><input type="datetime-local" min={tripStart || undefined} max={tripEnd || undefined} {...register('startTime')} /></div>{errors.startTime && <small className="field-error">{errors.startTime.message}</small>}</label><label>End<div className="trip-input"><CalendarDays size={15} /><input type="datetime-local" min={tripStart || undefined} max={tripEnd || undefined} {...register('endTime')} /></div>{errors.endTime && <small className="field-error">{errors.endTime.message}</small>}</label>{serverError && <div className="form-error activity-alert" role="alert">{String(serverError)}</div>}<button className="button button-dark" type="submit" disabled={isSubmitting}>{isSubmitting ? <><LoaderCircle className="spin" size={15} /> Saving...</> : 'Save activity'}</button>{onCancel && <button className="button button-light" type="button" onClick={onCancel}>Cancel</button>}</form>
+  return <form className="inline-form activity-form" onSubmit={handleSubmit(submit)} noValidate><div className="activity-form-heading"><span className="eyebrow">{activity ? 'Edit activity' : selectedTrip ? `Inside ${selectedTrip.destination}` : 'Schedule activity'}</span>{onCancel && <button type="button" className="icon-button" onClick={onCancel} title="Close form"><X size={16} /></button>}</div><label>Title<input {...register('title')} placeholder="Activity name" />{errors.title && <small className="field-error">{errors.title.message}</small>}</label><label className="location-form-label">Location<LocationField label="Activity location" value={location} onChange={(value) => setValue('location', value, { shouldValidate: true })} placeholder="Search Google Maps" />{errors.location && <small className="field-error">{errors.location.message}</small>}</label><label>Start<div className="trip-input"><CalendarDays size={15} /><input type="datetime-local" min={tripStart || undefined} max={tripEnd || undefined} {...register('startTime')} /></div>{errors.startTime && <small className="field-error">{errors.startTime.message}</small>}</label><label>End<div className="trip-input"><CalendarDays size={15} /><input type="datetime-local" min={tripStart || undefined} max={tripEnd || undefined} {...register('endTime')} /></div>{errors.endTime && <small className="field-error">{errors.endTime.message}</small>}</label>{serverError && <div className="form-error activity-alert" role="alert">{String(serverError)}</div>}<button className="button button-dark" type="submit" disabled={isSubmitting}>{isSubmitting ? <><LoaderCircle className="spin" size={15} /> Saving...</> : 'Save activity'}</button>{onCancel && <button className="button button-light" type="button" onClick={onCancel}>Cancel</button>}</form>
 }
