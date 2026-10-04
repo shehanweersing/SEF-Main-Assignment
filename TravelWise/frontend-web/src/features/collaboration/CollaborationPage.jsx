@@ -66,8 +66,10 @@ export default function CollaborationPage() {
       await action()
       setMessage(success)
       await load()
+      return true
     } catch (requestError) {
       setError(errorMessage(requestError, 'The request could not be completed.'))
+      return false
     } finally {
       setBusy('')
     }
@@ -76,7 +78,9 @@ export default function CollaborationPage() {
   function invite(event) {
     event.preventDefault()
     if (!inviteEmail.trim()) return
-    runAction('invite', () => collaborationApi.inviteMember(trip.id, { invitedEmail: inviteEmail.trim() }), 'Invitation created and valid for 7 days.').then(() => setInviteEmail(''))
+    runAction('invite', () => collaborationApi.inviteMember(trip.id, { invitedEmail: inviteEmail.trim() }), 'Invitation created and valid for 7 days.').then((succeeded) => {
+      if (succeeded) setInviteEmail('')
+    })
   }
 
   function savePreference(event) {

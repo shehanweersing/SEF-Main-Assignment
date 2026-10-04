@@ -66,6 +66,19 @@ public sealed class CollaborationService(ApplicationDbContext context) : ICollab
             ExpiresAt = DateTime.UtcNow.AddDays(7),
             Status = "Pending"
         });
+
+        if (invitedUser is not null)
+        {
+            _context.TripMembers.Add(new TripMember
+            {
+                TripId = tripId,
+                UserId = invitedUser.Id,
+                Role = "Viewer",
+                JoinedAt = DateTime.UtcNow,
+                Status = "Joined"
+            });
+        }
+
         await _context.SaveChangesAsync(cancellationToken);
 
         if (invitedUser is null)
