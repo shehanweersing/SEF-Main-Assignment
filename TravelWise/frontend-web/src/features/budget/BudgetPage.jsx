@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { budgetApi, getOrCreateBudget, getOrCreateTrip } from '../../api/travelWiseApi'
+import { budgetApi, getOrCreateBudget } from '../../api/travelWiseApi'
+import { tripApi } from '../../api/travelWiseApi'
 import BudgetHealthCard from './BudgetHealthCard'
 import { useAuth } from '../../context/AuthContext'
 
@@ -30,6 +31,7 @@ const normalizeExpense = (expense) => ({
 
 export default function BudgetPage() {
   const { user } = useAuth()
+  const [trips, setTrips] = useState([])
   const [trip, setTrip] = useState(null)
   const [budget, setBudget] = useState(null)
   const [categories, setCategories] = useState([])
@@ -72,11 +74,38 @@ export default function BudgetPage() {
 
   useEffect(() => {
     if (!user?.id) return
-    getOrCreateTrip(user.id).then(async (currentTrip) => {
+    tripApi.list(user.id).then(async ({ data }) => {
+      const availableTrips = Array.isArray(data) ? data : data ? [data] : []
+      setTrips(availableTrips)
+      if (!availableTrips.length) {
+        setTrip(null)
+        setBudget(null)
+        return
+      }
+      const currentTrip = availableTrips[0]
       setTrip(currentTrip)
       await loadBudget(currentTrip)
-    }).catch((error) => setServerError(errorText(error, 'Could not load budget data.')))
+    }).catch((error) => setServerError(errorText(error, 'Could not load your trips.')))
   }, [user?.id])
+
+  async function selectTrip(tripId) {
+    const selectedTrip = trips.find((item) => String(item.id) === String(tripId))
+    if (!selectedTrip || selectedTrip.id === trip?.id) return
+    setServerError('')
+    setTrip(selectedTrip)
+    setBudget(null)
+    setCategories([])
+    setRows([])
+    setTotal(0)
+    setPage(1)
+    setFilter('')
+    setShowExpenseForm(false)
+    try {
+      await loadBudget(selectedTrip)
+    } catch (error) {
+      setServerError(errorText(error, 'Could not load the selected trip budget.'))
+    }
+  }
 
   useEffect(() => {
     if (budget) loadExpenses(budget, page, filter).catch((error) => setServerError(errorText(error, 'Could not load expenses.')))
@@ -202,6 +231,13 @@ export default function BudgetPage() {
   return <>
     <div className="page-intro">
       <div><span className="eyebrow">Trip finances</span><h1>Budget, beautifully clear.</h1><p>Keep the numbers in view without letting them take over.</p></div>
+      <span className="budget-trip-selector">
+        <label htmlFor="budget-trip">Trip</label>
+        <select id="budget-trip" value={trip?.id || ''} onChange={(event) => selectTrip(event.target.value)} disabled={!trips.length}>
+          {!trips.length && <option value="">No trips found</option>}
+          {trips.map((item) => <option key={item.id} value={item.id}>{item.destination} · {item.startDate?.slice(0, 10)}</option>)}
+        </select>
+      </span>
       <span>
         {budget && <button className="button button-light" onClick={() => openModal('budget')}><Pencil size={14} /> Edit allocation</button>}
         {budget && <button className="button button-light" onClick={deleteBudget}><Trash2 size={14} /> Delete budget</button>}
@@ -209,6 +245,7 @@ export default function BudgetPage() {
         {!budget && <button className="button button-coral" onClick={() => openModal('create-budget')}><Plus size={16} /> Create budget</button>}
       </span>
     </div>
+    {!trips.length && <div className="form-error">Create a trip on the Trips page before adding a budget or expenses.</div>}
     {trip && budget && <BudgetHealthCard tripId={trip.id} currency={currency} />}
     <div className="feature-summary">
       <div className="summary-icon"><Wallet size={20} /></div>
