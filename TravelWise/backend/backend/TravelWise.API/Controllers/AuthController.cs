@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -26,26 +27,51 @@ namespace TravelWise.API.Controllers
 
         [AllowAnonymous]
         [HttpPost("register")]
-        public IActionResult Register([FromBody] RegisterDto dto)
+        public async Task<IActionResult> Register([FromBody] RegisterDto dto, CancellationToken cancellationToken)
         {
+            var email = dto.Email.Trim().ToLowerInvariant();
+            if (await _context.Users.AnyAsync(user => user.Email.ToLower() == email, cancellationToken))
+                return Conflict(new { message = "An account with this email already exists." });
+
             var user = new User 
             { 
-                FullName = dto.FullName,
-                Email = dto.Email, 
+                FullName = dto.FullName.Trim(),
+                Email = email,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
                 Role = dto.Role 
             };
             
             _context.Users.Add(user);
-            _context.SaveChanges();
+            try
+            {
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException)
+            {
+                return Problem(
+                    detail: "The database is unavailable. Verify the Supabase connection string or use the Supabase Session Pooler connection.",
+                    statusCode: StatusCodes.Status503ServiceUnavailable,
+                    title: "Registration is temporarily unavailable.");
+            }
             return Ok(new { Message = "User registered successfully" });
         }
 
         [AllowAnonymous]
         [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginDto dto)
+        public async Task<IActionResult> Login([FromBody] LoginDto dto, CancellationToken cancellationToken)
         {
-            var user = _context.Users.SingleOrDefault(u => u.Email == dto.Email);
+            User? user;
+            try
+            {
+                user = await _context.Users.SingleOrDefaultAsync(u => u.Email == dto.Email.Trim().ToLowerInvariant(), cancellationToken);
+            }
+            catch (Exception exception) when (exception is Npgsql.NpgsqlException or TimeoutException)
+            {
+                return Problem(
+                    detail: "The database is unavailable. Verify the Supabase connection string or use the Supabase Session Pooler connection.",
+                    statusCode: StatusCodes.Status503ServiceUnavailable,
+                    title: "Login is temporarily unavailable.");
+            }
             
             if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
                 return Unauthorized("Invalid credentials.");

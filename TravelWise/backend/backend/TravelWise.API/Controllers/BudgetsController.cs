@@ -16,7 +16,8 @@ namespace TravelWise.API.Controllers
         public BudgetsController(ApplicationDbContext context) => _context = context;
 
         [HttpGet("{tripId:int}/health")]
-        public async Task<ActionResult<BudgetHealthDto>> GetHealth(int tripId)
+        [HttpPost("{tripId:int}/analyze-health")]
+        public async Task<ActionResult<BudgetHealthDto>> GetHealth(int tripId, [FromBody] BudgetHealthRequest? request = null)
         {
             var tripExists = await _context.Trips.AnyAsync(trip => trip.Id == tripId);
             if (!tripExists) return NotFound("The selected trip does not exist.");
@@ -38,6 +39,11 @@ namespace TravelWise.API.Controllers
                 : spendingPercentage <= 100m
                     ? "WARNING"
                     : "CRITICAL";
+            var trip = await _context.Trips.SingleAsync(item => item.Id == tripId);
+            var duration = request?.TripDurationDays ?? Math.Max(1, (trip.EndDate.Date - trip.StartDate.Date).Days);
+            var elapsedDays = Math.Clamp((DateTime.UtcNow.Date - trip.StartDate.Date).Days, 1, duration);
+            var burnRate = decimal.Round(totalSpent / elapsedDays, 2);
+            var projectedSpend = decimal.Round(burnRate * duration, 2);
 
             return Ok(new BudgetHealthDto
             {
@@ -46,6 +52,10 @@ namespace TravelWise.API.Controllers
                 RemainingBudget = decimal.Round(totalBudget - totalSpent, 2),
                 SpendingPercentage = spendingPercentage,
                 HealthStatus = healthStatus,
+                BurnRatePerDay = burnRate,
+                ProjectedSpend = projectedSpend,
+                ForecastedShortfall = decimal.Round(Math.Max(0m, projectedSpend - totalBudget), 2),
+                ConfidenceScore = totalSpent > 0m ? 0.85m : 0.4m,
             });
         }
     }

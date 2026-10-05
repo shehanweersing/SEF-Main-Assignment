@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TravelWise.API.Data;
@@ -11,9 +12,11 @@ using TravelWise.API.Data;
 namespace TravelWise.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261005134252_AddTripCurrency")]
+    partial class AddTripCurrency
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -91,33 +94,6 @@ namespace TravelWise.API.Migrations
                     b.HasIndex("TripId");
 
                     b.ToTable("Budgets");
-                });
-
-            modelBuilder.Entity("TravelWise.API.Models.BudgetCategory", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<decimal>("AllocatedAmount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("BudgetId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BudgetId", "Name")
-                        .IsUnique();
-
-                    b.ToTable("BudgetCategories");
                 });
 
             modelBuilder.Entity("TravelWise.API.Models.ConsensusRecord", b =>
@@ -542,17 +518,6 @@ namespace TravelWise.API.Migrations
                     b.Navigation("Trip");
                 });
 
-            modelBuilder.Entity("TravelWise.API.Models.BudgetCategory", b =>
-                {
-                    b.HasOne("TravelWise.API.Models.Budget", "Budget")
-                        .WithMany("Categories")
-                        .HasForeignKey("BudgetId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Budget");
-                });
-
             modelBuilder.Entity("TravelWise.API.Models.ConsensusRecord", b =>
                 {
                     b.HasOne("TravelWise.API.Models.Trip", "Trip")
@@ -703,8 +668,6 @@ namespace TravelWise.API.Migrations
 
             modelBuilder.Entity("TravelWise.API.Models.Budget", b =>
                 {
-                    b.Navigation("Categories");
-
                     b.Navigation("Expenses");
                 });
 

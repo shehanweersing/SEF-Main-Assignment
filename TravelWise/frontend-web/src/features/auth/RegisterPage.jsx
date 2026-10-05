@@ -18,7 +18,7 @@ export default function RegisterPage() {
       setSuccess('Your account is ready. You can sign in now.')
       setTimeout(() => navigate('/login'), 900)
     } catch (requestError) {
-      setError(requestError.response?.data?.message || requestError.response?.data || 'We could not create your account.')
+      setError(requestError.response?.data?.detail || requestError.response?.data?.message || requestError.response?.data || (requestError.code === 'ERR_NETWORK' ? 'The TravelWise API is unavailable. Start the backend and try again.' : 'We could not create your account.'))
     }
   }
 

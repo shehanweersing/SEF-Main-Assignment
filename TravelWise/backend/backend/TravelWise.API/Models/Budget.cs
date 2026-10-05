@@ -33,5 +33,6 @@ namespace TravelWise.API.Models
 
         // Navigation property for individual expenses
         public ICollection<Expense> Expenses { get; set; } = new List<Expense>();
+        public ICollection<BudgetCategory> Categories { get; set; } = new List<BudgetCategory>();
     }
 }

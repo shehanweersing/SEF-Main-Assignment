@@ -30,16 +30,39 @@ namespace TravelWise.API.Controllers
         public async Task<IActionResult> GetBudget(int id) => await _context.Budgets.Include(b => b.Expenses).FirstOrDefaultAsync(b => b.Id == id) is { } budget ? Ok(budget) : NotFound();
 
         [HttpPost]
-        public async Task<IActionResult> AddBudget([FromBody] CreateBudgetDto dto) { if (dto.TotalAllocation <= 0) return BadRequest("Total allocation must be greater than zero."); var budget = new Budget { TripId = dto.TripId, TotalAllocation = dto.TotalAllocation, Currency = dto.Currency }; _context.Budgets.Add(budget); await _context.SaveChangesAsync(); return CreatedAtAction(nameof(GetBudget), new { id = budget.Id }, budget); }
+        public async Task<IActionResult> AddBudget([FromBody] CreateBudgetDto dto) { if (dto.TotalAllocation <= 0) return BadRequest("Total allocation must be greater than zero."); var trip = await _context.Trips.FindAsync(dto.TripId); if (trip is null) return NotFound("The selected trip does not exist."); var tripCurrency = string.IsNullOrWhiteSpace(trip.Currency) ? "USD" : trip.Currency; if (!string.Equals(dto.Currency, tripCurrency, StringComparison.OrdinalIgnoreCase)) return BadRequest("Budget currency must match the trip currency."); var budget = new Budget { TripId = dto.TripId, TotalAllocation = dto.TotalAllocation, Currency = dto.Currency.ToUpperInvariant() }; _context.Budgets.Add(budget); await _context.SaveChangesAsync(); return CreatedAtAction(nameof(GetBudget), new { id = budget.Id }, budget); }
+
+        [HttpPost("~/api/trips/{tripId:int}/budget")]
+        public Task<IActionResult> CreateTripBudget(int tripId, [FromBody] CreateBudgetDto dto)
+        {
+            dto.TripId = tripId;
+            return AddBudget(dto);
+        }
+
+        [HttpGet("~/api/trips/{tripId:int}/budget")]
+        public async Task<IActionResult> GetTripBudget(int tripId)
+        {
+            var budget = await _context.Budgets.Include(item => item.Expenses).SingleOrDefaultAsync(item => item.TripId == tripId);
+            return budget is null ? NotFound() : Ok(budget);
+        }
 
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> UpdateBudget(int id, [FromBody] CreateBudgetDto dto) { var budget = await _context.Budgets.FindAsync(id); if (budget is null) return NotFound(); if (dto.TotalAllocation <= 0) return BadRequest("Total allocation must be greater than zero."); budget.TripId = dto.TripId; budget.TotalAllocation = dto.TotalAllocation; budget.Currency = dto.Currency; await _context.SaveChangesAsync(); return Ok(budget); }
+        public async Task<IActionResult> UpdateBudget(int id, [FromBody] CreateBudgetDto dto) { var budget = await _context.Budgets.FindAsync(id); if (budget is null) return NotFound(); if (dto.TotalAllocation <= 0) return BadRequest("Total allocation must be greater than zero."); var trip = await _context.Trips.FindAsync(dto.TripId); if (trip is null) return NotFound("The selected trip does not exist."); var tripCurrency = string.IsNullOrWhiteSpace(trip.Currency) ? "USD" : trip.Currency; if (!string.Equals(dto.Currency, tripCurrency, StringComparison.OrdinalIgnoreCase)) return BadRequest("Budget currency must match the trip currency."); budget.TripId = dto.TripId; budget.TotalAllocation = dto.TotalAllocation; budget.Currency = dto.Currency.ToUpperInvariant(); await _context.SaveChangesAsync(); return Ok(budget); }
 
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteBudget(int id) { var budget = await _context.Budgets.FindAsync(id); if (budget is null) return NotFound(); _context.Budgets.Remove(budget); await _context.SaveChangesAsync(); return NoContent(); }
 
         [HttpGet("expenses")]
-        public async Task<IActionResult> GetExpenses([FromQuery] int? budgetId) => Ok(await _context.Expenses.Where(e => !budgetId.HasValue || e.BudgetId == budgetId).OrderByDescending(e => e.ExpenseDate).ToListAsync());
+        public async Task<IActionResult> GetExpenses([FromQuery] int? budgetId, [FromQuery] string? category, [FromQuery] int page = 1, [FromQuery] int pageSize = 25)
+        {
+            page = Math.Max(1, page);
+            pageSize = Math.Clamp(pageSize, 1, 100);
+            var query = _context.Expenses.AsNoTracking().Where(e => !budgetId.HasValue || e.BudgetId == budgetId);
+            if (!string.IsNullOrWhiteSpace(category)) query = query.Where(e => e.Category == category);
+            var total = await query.CountAsync();
+            var items = await query.OrderByDescending(e => e.ExpenseDate).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+            return Ok(new { items, total, page, pageSize });
+        }
 
         [HttpGet("expenses/{id:int}")]
         public async Task<IActionResult> GetExpense(int id) => await _context.Expenses.FindAsync(id) is { } expense ? Ok(expense) : NotFound();
@@ -53,16 +76,55 @@ namespace TravelWise.API.Controllers
                 var expense = await _budgetService.AddExpenseAsync(dto);
                 return CreatedAtAction(nameof(AddExpense), new { id = expense.Id }, expense);
             }
+
             catch (ArgumentException ex)
             {
                 return BadRequest(ex.Message);
             }
         }
 
+        [HttpPost("~/api/budgets/{budgetId:int}/expenses")]
+        public Task<IActionResult> CreateBudgetExpense(int budgetId, [FromBody] CreateExpenseDto dto)
+        {
+            dto.BudgetId = budgetId;
+            return AddExpense(dto);
+        }
+
+        [HttpGet("~/api/budgets/{budgetId:int}/expenses")]
+        public Task<IActionResult> ListBudgetExpenses(int budgetId, [FromQuery] string? category, [FromQuery] int page = 1, [FromQuery] int pageSize = 25) =>
+            GetExpenses(budgetId, category, page, pageSize);
+
         [HttpPut("expenses/{id:int}")]
-        public async Task<IActionResult> UpdateExpense(int id, [FromBody] CreateExpenseDto dto) { var expense = await _context.Expenses.FindAsync(id); if (expense is null) return NotFound(); if (dto.Amount <= 0) return BadRequest("Expense amount must be greater than zero."); expense.BudgetId = dto.BudgetId; expense.Category = dto.Category; expense.Description = dto.Description; expense.Amount = dto.Amount; expense.ExpenseDate = DateTimeNormalization.ToUtc(dto.ExpenseDate); await _context.SaveChangesAsync(); return Ok(expense); }
+        [HttpPut("~/api/expenses/{id:int}")]
+        public async Task<IActionResult> UpdateExpense(int id, [FromBody] CreateExpenseDto dto)
+        {
+            var expense = await _context.Expenses.Include(item => item.Budget).ThenInclude(item => item!.Expenses).SingleOrDefaultAsync(item => item.Id == id);
+            if (expense is null) return NotFound();
+            if (dto.Amount <= 0) return BadRequest("Expense amount must be greater than zero.");
+            var otherExpenses = expense.Budget!.Expenses.Where(item => item.Id != id).Sum(item => item.Amount);
+            if (otherExpenses + dto.Amount > expense.Budget.TotalAllocation) return BadRequest("This expense exceeds the remaining budget.");
+            expense.BudgetId = dto.BudgetId; expense.Category = dto.Category; expense.Description = dto.Description; expense.Amount = dto.Amount; expense.ExpenseDate = DateTimeNormalization.ToUtc(dto.ExpenseDate);
+            await _context.SaveChangesAsync(); return Ok(expense);
+        }
 
         [HttpDelete("expenses/{id:int}")]
+        [HttpDelete("~/api/expenses/{id:int}")]
         public async Task<IActionResult> DeleteExpense(int id) { var expense = await _context.Expenses.FindAsync(id); if (expense is null) return NotFound(); _context.Expenses.Remove(expense); await _context.SaveChangesAsync(); return NoContent(); }
+
+        [HttpGet("{budgetId:int}/categories")]
+        public async Task<IActionResult> GetCategories(int budgetId) => Ok(await _context.BudgetCategories.AsNoTracking().Where(category => category.BudgetId == budgetId).OrderBy(category => category.Name).ToListAsync());
+
+        [HttpPost("{budgetId:int}/categories")]
+        public async Task<IActionResult> AddCategory(int budgetId, BudgetCategoryDto dto)
+        {
+            if (dto.AllocatedAmount <= 0 || string.IsNullOrWhiteSpace(dto.Name)) return BadRequest("Category name and allocation must be valid.");
+            var budget = await _context.Budgets.Include(item => item.Categories).SingleOrDefaultAsync(item => item.Id == budgetId);
+            if (budget is null) return NotFound();
+            if (budget.Categories.Sum(category => category.AllocatedAmount) + dto.AllocatedAmount > budget.TotalAllocation) return BadRequest("Category allocations cannot exceed the total budget.");
+            var category = new BudgetCategory { BudgetId = budgetId, Name = dto.Name.Trim(), AllocatedAmount = dto.AllocatedAmount };
+            _context.BudgetCategories.Add(category);
+            await _context.SaveChangesAsync();
+            return CreatedAtAction(nameof(GetCategories), new { budgetId }, category);
+        }
     }
 }

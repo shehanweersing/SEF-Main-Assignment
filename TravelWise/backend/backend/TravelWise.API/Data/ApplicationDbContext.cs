@@ -24,6 +24,7 @@ namespace TravelWise.API.Data
         public DbSet<MemberPreference> MemberPreferences { get; set; }
         public DbSet<Vote> Votes { get; set; }
         public DbSet<ConsensusRecord> ConsensusRecords { get; set; }
+        public DbSet<BudgetCategory> BudgetCategories { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -44,6 +45,10 @@ namespace TravelWise.API.Data
 
             modelBuilder.Entity<Vote>()
                 .HasIndex(v => new { v.ActivityId, v.UserId })
+                .IsUnique();
+
+            modelBuilder.Entity<BudgetCategory>()
+                .HasIndex(category => new { category.BudgetId, category.Name })
                 .IsUnique();
         }
     }

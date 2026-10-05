@@ -18,6 +18,9 @@ namespace TravelWise.API.Models
         [MaxLength(200)]
         public string Destination { get; set; } = string.Empty;
 
+        [Required, MaxLength(3)]
+        public string Currency { get; set; } = "USD";
+
         [Required]
         public DateTime StartDate { get; set; }
 

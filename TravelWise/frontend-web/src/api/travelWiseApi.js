@@ -11,11 +11,14 @@ export const budgetApi = {
   createBudget: (budget) => axiosInstance.post('/Budget', budget),
   updateBudget: (id, budget) => axiosInstance.put(`/Budget/${id}`, budget),
   deleteBudget: (id) => axiosInstance.delete(`/Budget/${id}`),
-  listExpenses: (budgetId) => axiosInstance.get('/Budget/expenses', { params: budgetId ? { budgetId } : undefined }),
+  listExpenses: (budgetId, params) => axiosInstance.get('/Budget/expenses', { params: { ...(budgetId ? { budgetId } : {}), ...params } }),
+  analyzeHealth: (tripId, payload = {}) => axiosInstance.post(`/Budgets/${tripId}/analyze-health`, payload),
   getExpense: (id) => axiosInstance.get(`/Budget/expenses/${id}`),
   addExpense: (expense) => axiosInstance.post('/Budget/expenses', expense),
   updateExpense: (id, expense) => axiosInstance.put(`/Budget/expenses/${id}`, expense),
   deleteExpense: (id) => axiosInstance.delete(`/Budget/expenses/${id}`),
+  listCategories: (budgetId) => axiosInstance.get(`/Budget/${budgetId}/categories`),
+  addCategory: (budgetId, category) => axiosInstance.post(`/Budget/${budgetId}/categories`, category),
 }
 
 export const activityApi = {
