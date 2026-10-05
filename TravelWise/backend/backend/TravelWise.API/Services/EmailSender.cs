@@ -20,8 +20,12 @@ public sealed class EmailSender(IOptions<EmailOptions> options, ILogger<EmailSen
 
     public async Task SendTripInvitationAsync(string recipient, string destination, string invitationUrl, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(_options.Host) || string.IsNullOrWhiteSpace(_options.FromAddress))
-            throw new EmailConfigurationException("SMTP email is not configured. Set Email:Host and Email:FromAddress using user secrets or environment variables.");
+        if (string.IsNullOrWhiteSpace(_options.Host) ||
+            string.IsNullOrWhiteSpace(_options.Username) ||
+            string.IsNullOrWhiteSpace(_options.Password) ||
+            string.IsNullOrWhiteSpace(_options.FromAddress) ||
+            _options.Port <= 0)
+            throw new EmailConfigurationException("SMTP email is not configured. Set Email:Host, Email:Port, Email:Username, Email:Password, and Email:FromAddress using a Gmail app password in user secrets or environment variables.");
 
         using var message = new MailMessage
         {
@@ -47,8 +51,8 @@ public sealed class EmailSender(IOptions<EmailOptions> options, ILogger<EmailSen
         }
         catch (SmtpException exception)
         {
-            _logger.LogError(exception, "SMTP delivery failed for {Recipient}", recipient);
-            throw new EmailDeliveryException("The invitation email could not be delivered. Check the SMTP host, port, credentials, and SSL settings.", exception);
+            _logger.LogError(exception, "SMTP delivery failed for {Recipient} using {Host}:{Port}", recipient, _options.Host, _options.Port);
+            throw new EmailDeliveryException("The invitation email could not be delivered. For Gmail, use smtp.gmail.com, port 587 with SSL enabled, and a 16-character Gmail app password (not your normal Gmail password).", exception);
         }
         _logger.LogInformation("Trip invitation email sent to {Recipient}", recipient);
     }

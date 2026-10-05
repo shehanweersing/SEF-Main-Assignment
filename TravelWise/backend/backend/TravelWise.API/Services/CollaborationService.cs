@@ -50,55 +50,62 @@ public sealed class CollaborationService(
     public async Task<(TripMemberResponse? Member, string? Error)> InviteMemberAsync(
         int tripId, int userId, InviteMemberRequest request, CancellationToken cancellationToken)
     {
-        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
-        var trip = await _context.Trips.SingleOrDefaultAsync(t => t.Id == tripId, cancellationToken);
-        if (trip is null) return (null, "Trip not found.");
-        if (!await HasRoleAsync(trip, userId, "Owner", "Editor", cancellationToken)) return (null, "Only trip owners and editors can invite members.");
-
-        var email = request.InvitedEmail.Trim().ToLowerInvariant();
-        var existingInvitation = await _context.Invitations.AnyAsync(i =>
-            i.TripId == tripId && i.InvitedEmail == email && i.Status == "Pending" && i.ExpiresAt > DateTime.UtcNow, cancellationToken);
-        if (existingInvitation) return (null, "A pending invitation already exists for this email.");
-
-        var invitedUser = await _context.Users.SingleOrDefaultAsync(u => u.Email.ToLower() == email, cancellationToken);
-        if (invitedUser is not null && await IsMemberAsync(trip, invitedUser.Id, cancellationToken))
-            return (null, "That user is already a member of the trip.");
-
-        var invitation = new Invitation
+        var strategy = _context.Database.CreateExecutionStrategy();
+        Func<Task<(TripMemberResponse? Member, string? Error)>> operation = async () =>
         {
-            TripId = tripId,
-            InvitedEmail = email,
-            Token = Guid.NewGuid().ToString("N"),
-            ExpiresAt = DateTime.UtcNow.AddDays(7),
-            Status = "Pending"
-        };
-        _context.Invitations.Add(invitation);
+            await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+            var trip = await _context.Trips.SingleOrDefaultAsync(t => t.Id == tripId, cancellationToken);
+            if (trip is null) return (null, "Trip not found.");
+            if (!await HasRoleAsync(trip, userId, "Owner", "Editor", cancellationToken))
+                return (null, "Only trip owners and editors can invite members.");
 
-        if (invitedUser is not null)
-        {
-            _context.Notifications.Add(new Notification
+            var email = request.InvitedEmail.Trim().ToLowerInvariant();
+            var existingInvitation = await _context.Invitations.AnyAsync(i =>
+                i.TripId == tripId && i.InvitedEmail == email && i.Status == "Pending" && i.ExpiresAt > DateTime.UtcNow,
+                cancellationToken);
+            if (existingInvitation) return (null, "A pending invitation already exists for this email.");
+
+            var invitedUser = await _context.Users.SingleOrDefaultAsync(u => u.Email.ToLower() == email, cancellationToken);
+            if (invitedUser is not null && await IsMemberAsync(trip, invitedUser.Id, cancellationToken))
+                return (null, "That user is already a member of the trip.");
+
+            var invitation = new Invitation
             {
-                UserId = invitedUser.Id,
                 TripId = tripId,
-                Invitation = invitation,
-                Message = $"You have been invited to collaborate on the {trip.Destination} trip.",
-                IsRead = false
-            });
-        }
+                InvitedEmail = email,
+                Token = Guid.NewGuid().ToString("N"),
+                ExpiresAt = DateTime.UtcNow.AddDays(7),
+                Status = "Pending"
+            };
+            _context.Invitations.Add(invitation);
 
-        await _context.SaveChangesAsync(cancellationToken);
-        var frontendUrl = _configuration["Frontend:BaseUrl"]?.TrimEnd('/') ?? "http://localhost:5173";
-        await _emailSender.SendTripInvitationAsync(
-            email,
-            trip.Destination,
-            $"{frontendUrl}/dashboard/collaboration?invitation={invitation.Token}",
-            cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
+            if (invitedUser is not null)
+            {
+                _context.Notifications.Add(new Notification
+                {
+                    UserId = invitedUser.Id,
+                    TripId = tripId,
+                    Invitation = invitation,
+                    Message = $"You have been invited to collaborate on the {trip.Destination} trip.",
+                    IsRead = false
+                });
+            }
 
-        if (invitedUser is null)
-            return (new TripMemberResponse(0, string.Empty, email, "Viewer", DateTimeOffset.UtcNow, "Pending"), null);
+            await _context.SaveChangesAsync(cancellationToken);
+            var frontendUrl = _configuration["Frontend:BaseUrl"]?.TrimEnd('/') ?? "http://localhost:5173";
+            await _emailSender.SendTripInvitationAsync(
+                email,
+                trip.Destination,
+                $"{frontendUrl}/dashboard/collaboration?invitation={invitation.Token}",
+                cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
 
-        return (new TripMemberResponse(invitedUser.Id, invitedUser.FullName, invitedUser.Email, "Viewer", DateTimeOffset.UtcNow, "Pending"), null);
+            if (invitedUser is null)
+                return (new TripMemberResponse(0, string.Empty, email, "Viewer", DateTimeOffset.UtcNow, "Pending"), null);
+
+            return (new TripMemberResponse(invitedUser.Id, invitedUser.FullName, invitedUser.Email, "Viewer", DateTimeOffset.UtcNow, "Pending"), null);
+        };
+        return await strategy.ExecuteAsync(operation);
     }
 
     public async Task<string?> ChangeRoleAsync(int tripId, int actorId, int targetUserId, UpdateMemberRoleRequest request, CancellationToken cancellationToken)

@@ -42,7 +42,7 @@ export default function CollaborationPage() {
         activityApi.list(selectedTrip.id),
       ])
       setMembers(membersResponse.data)
-      setActivities(activityResponse.data)
+      setActivities(Array.isArray(activityResponse.data) ? activityResponse.data : activityResponse.data.items || [])
       try {
         const reportResponse = await collaborationApi.getConsensusReport(selectedTrip.id)
         setReport(reportResponse.data)
