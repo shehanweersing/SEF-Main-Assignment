@@ -1,0 +1,55 @@
+# Backend build output and local configuration
+**/bin/
+**/obj/
+**/appsettings.Development.json
+**/appsettings.Local.json
+**/appsettings.*.local.json
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Frontend dependencies and build output
+**/node_modules/
+**/dist/
+**/build/
+**/.env
+**/.env.*
+!.env.example
+
+# Flutter/Dart generated files and local secrets
+**/.dart_tool/
+**/.pub-cache/
+**/.pub/
+**/coverage/
+**/.packages
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/android/.gradle/
+**/android/local.properties
+**/android/key.properties
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/ephemeral/
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+*.keystore
+*.jks
+
+# IDE and operating-system files
+.vs/
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.class
+
+# Logs and local tooling state
+*.log
+logs/
+.history/
+.cache/
+*.pyc
+
+# Keep placeholder directories when needed
+!.gitkeep

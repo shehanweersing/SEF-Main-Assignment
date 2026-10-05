@@ -14,8 +14,25 @@ public sealed class CollaborationController(ICollaborationService service) : Con
     [HttpPost("members/invite")]
     public async Task<IActionResult> Invite(int tripId, InviteMemberRequest request, CancellationToken cancellationToken)
     {
-        var result = await service.InviteMemberAsync(tripId, CurrentUserId(), request, cancellationToken);
-        return result.Error is not null ? Conflict(result.Error) : Created($"/api/trips/{tripId}/members", result.Member);
+        try
+        {
+            var result = await service.InviteMemberAsync(tripId, CurrentUserId(), request, cancellationToken);
+            return result.Error is not null ? Conflict(result.Error) : Created($"/api/trips/{tripId}/members", result.Member);
+        }
+        catch (EmailConfigurationException exception)
+        {
+            return Problem(
+                detail: exception.Message,
+                statusCode: StatusCodes.Status503ServiceUnavailable,
+                title: "Invitation email is not configured.");
+        }
+        catch (EmailDeliveryException exception)
+        {
+            return Problem(
+                detail: exception.Message,
+                statusCode: StatusCodes.Status502BadGateway,
+                title: "Invitation email could not be sent.");
+        }
     }
 
     [HttpGet("members")]

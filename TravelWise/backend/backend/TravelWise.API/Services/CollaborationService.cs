@@ -50,6 +50,7 @@ public sealed class CollaborationService(
     public async Task<(TripMemberResponse? Member, string? Error)> InviteMemberAsync(
         int tripId, int userId, InviteMemberRequest request, CancellationToken cancellationToken)
     {
+        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
         var trip = await _context.Trips.SingleOrDefaultAsync(t => t.Id == tripId, cancellationToken);
         if (trip is null) return (null, "Trip not found.");
         if (!await HasRoleAsync(trip, userId, "Owner", "Editor", cancellationToken)) return (null, "Only trip owners and editors can invite members.");
@@ -92,6 +93,7 @@ public sealed class CollaborationService(
             trip.Destination,
             $"{frontendUrl}/dashboard/collaboration?invitation={invitation.Token}",
             cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
         if (invitedUser is null)
             return (new TripMemberResponse(0, string.Empty, email, "Viewer", DateTimeOffset.UtcNow, "Pending"), null);
