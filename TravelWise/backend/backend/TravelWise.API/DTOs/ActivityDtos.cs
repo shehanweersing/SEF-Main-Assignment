@@ -9,5 +9,8 @@ namespace TravelWise.API.DTOs
         public DateTime EndTime { get; set; }
         public string Location { get; set; } = string.Empty;
         public string? InterestType { get; set; }
+        public decimal Cost { get; set; }
+        public string? Category { get; set; }
+        public string? InterestTags { get; set; }
     }
 }

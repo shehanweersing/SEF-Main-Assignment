@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace TravelWise.API.Models
 {
@@ -15,6 +16,7 @@ namespace TravelWise.API.Models
         public int TripId => Budget?.TripId ?? 0;
         
         [ForeignKey("BudgetId")]
+        [JsonIgnore]
         public Budget? Budget { get; set; }
 
         [Required]

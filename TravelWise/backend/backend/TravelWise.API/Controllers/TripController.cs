@@ -5,6 +5,7 @@ using TravelWise.API.Data;
 using TravelWise.API.Models;
 using TravelWise.API.Utilities;
 using System.Security.Claims;
+using Npgsql;
 
 namespace TravelWise.API.Controllers
 {
@@ -17,12 +18,33 @@ namespace TravelWise.API.Controllers
         public TripController(ApplicationDbContext context) => _context = context;
 
         [HttpGet]
-        public async Task<IActionResult> GetTrips([FromQuery] int? userId, [FromQuery] string? search)
+        public async Task<IActionResult> GetTrips([FromQuery] int? userId, [FromQuery] string? search, CancellationToken cancellationToken)
         {
-            var query = _context.Trips.AsQueryable();
-            if (userId.HasValue) query = query.Where(t => t.UserId == userId);
-            if (!string.IsNullOrWhiteSpace(search)) query = query.Where(t => EF.Functions.ILike(t.Destination, $"%{search}%") || (t.TravelObjective != null && EF.Functions.ILike(t.TravelObjective, $"%{search}%")));
-            return Ok(await query.OrderByDescending(t => t.StartDate).ToListAsync());
+            try
+            {
+                var query = _context.Trips.AsNoTracking().AsQueryable();
+                if (userId.HasValue) query = query.Where(t => t.UserId == userId);
+                if (!string.IsNullOrWhiteSpace(search)) query = query.Where(t => EF.Functions.ILike(t.Destination, $"%{search}%") || (t.TravelObjective != null && EF.Functions.ILike(t.TravelObjective, $"%{search}%")));
+                return Ok(await query.OrderByDescending(t => t.StartDate).ToListAsync(cancellationToken));
+            }
+            catch (NpgsqlException)
+            {
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, new ProblemDetails
+                {
+                    Title = "Database temporarily unavailable",
+                    Detail = "Travel data could not be loaded. Check the Supabase connection and try again.",
+                    Status = StatusCodes.Status503ServiceUnavailable
+                });
+            }
+            catch (InvalidOperationException exception) when (exception.InnerException is NpgsqlException or TimeoutException)
+            {
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, new ProblemDetails
+                {
+                    Title = "Database temporarily unavailable",
+                    Detail = "Travel data could not be loaded. Check the Supabase connection and try again.",
+                    Status = StatusCodes.Status503ServiceUnavailable
+                });
+            }
         }
 
         [HttpGet("{id:int}")]

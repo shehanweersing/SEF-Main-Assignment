@@ -4,12 +4,34 @@ using TravelWise.API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // 1. Add PostgreSQL Database Context
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(connectionString))
+    throw new InvalidOperationException("Supabase PostgreSQL connection is required. Set ConnectionStrings:DefaultConnection using user-secrets or an environment variable.");
+
+var connectionBuilder = new NpgsqlConnectionStringBuilder(connectionString);
+if (string.IsNullOrWhiteSpace(connectionBuilder.Host) ||
+    !connectionBuilder.Host.Contains("supabase", StringComparison.OrdinalIgnoreCase))
+    throw new InvalidOperationException("TravelWise must use the Supabase PostgreSQL database. Check ConnectionStrings:DefaultConnection.");
+
+if (string.Equals(connectionBuilder.Host, "db.omhbchuhfwrqnkflqbox.supabase.co", StringComparison.OrdinalIgnoreCase))
+{
+    connectionBuilder.Host = "aws-0-ap-southeast-2.pooler.supabase.com";
+    if (string.Equals(connectionBuilder.Username, "postgres", StringComparison.OrdinalIgnoreCase))
+        connectionBuilder.Username = "postgres.omhbchuhfwrqnkflqbox";
+    connectionString = connectionBuilder.ConnectionString;
+}
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(
+        connectionString,
+        npgsqlOptions => npgsqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 3,
+            maxRetryDelay: TimeSpan.FromSeconds(5),
+            errorCodesToAdd: null)));
 
 // 2. Register Services and Controllers
 builder.Services.AddScoped<BudgetService>();

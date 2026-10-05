@@ -37,7 +37,10 @@ namespace TravelWise.API.Services
                 StartTime = startTime,
                 EndTime = endTime,
                 Location = dto.Location,
-                InterestType = dto.InterestType
+                InterestType = dto.InterestType,
+                Cost = dto.Cost,
+                Category = dto.Category,
+                InterestTags = dto.InterestTags
             };
 
             _context.Activities.Add(activity);

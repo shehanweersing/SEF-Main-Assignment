@@ -9,6 +9,7 @@ export const budgetApi = {
   listBudgets: (tripId) => axiosInstance.get('/Budget', { params: tripId ? { tripId } : undefined }),
   getBudget: (id) => axiosInstance.get(`/Budget/${id}`),
   createBudget: (budget) => axiosInstance.post('/Budget', budget),
+  createTripBudget: (tripId, budget) => axiosInstance.post(`/trips/${tripId}/budget`, { ...budget, tripId }),
   updateBudget: (id, budget) => axiosInstance.put(`/Budget/${id}`, budget),
   deleteBudget: (id) => axiosInstance.delete(`/Budget/${id}`),
   listExpenses: (budgetId, params) => axiosInstance.get('/Budget/expenses', { params: { ...(budgetId ? { budgetId } : {}), ...params } }),
@@ -19,10 +20,17 @@ export const budgetApi = {
   deleteExpense: (id) => axiosInstance.delete(`/Budget/expenses/${id}`),
   listCategories: (budgetId) => axiosInstance.get(`/Budget/${budgetId}/categories`),
   addCategory: (budgetId, category) => axiosInstance.post(`/Budget/${budgetId}/categories`, category),
+  updateCategory: (budgetId, categoryId, category) => axiosInstance.put(`/Budget/${budgetId}/categories/${categoryId}`, category),
+  deleteCategory: (budgetId, categoryId) => axiosInstance.delete(`/Budget/${budgetId}/categories/${categoryId}`),
 }
 
 export const activityApi = {
   list: (tripId) => axiosInstance.get('/Activity', { params: tripId ? { tripId } : undefined }),
+  search: (params) => axiosInstance.get('/activities/search', { params }),
+  schedule: (tripId) => axiosInstance.get(`/trips/${tripId}/schedule`),
+  addToSchedule: (tripId, activity) => axiosInstance.post(`/trips/${tripId}/schedule`, activity),
+  checkConflicts: (tripId) => axiosInstance.post(`/trips/${tripId}/check-conflicts`, {}),
+  optimizeItinerary: (tripId) => axiosInstance.post(`/trips/${tripId}/optimize-itinerary`, {}),
   get: (id) => axiosInstance.get(`/Activity/${id}`),
   addActivity: (activity) => axiosInstance.post('/Activity', activity),
   update: (id, activity) => axiosInstance.put(`/Activity/${id}`, activity),
