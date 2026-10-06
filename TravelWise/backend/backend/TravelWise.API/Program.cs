@@ -36,8 +36,12 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // 2. Register Services and Controllers
 builder.Services.AddScoped<BudgetService>();
 builder.Services.AddControllers();
+var allowedOrigins = builder.Configuration
+    .GetSection("Frontend:AllowedOrigins")
+    .Get<string[]>()
+    ?? ["http://localhost:5173"];
 builder.Services.AddCors(options => options.AddPolicy("Frontend", policy =>
-    policy.SetIsOriginAllowed(_ => true)
+    policy.WithOrigins(allowedOrigins)
         .AllowAnyHeader()
         .AllowAnyMethod()
         .AllowCredentials()));
