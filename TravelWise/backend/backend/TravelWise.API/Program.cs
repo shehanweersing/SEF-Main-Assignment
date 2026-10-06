@@ -104,11 +104,10 @@ var app = builder.Build();
 app.UseCors("Frontend");
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
+
     app.UseSwagger();
     app.UseSwaggerUI();
-}
+
 
 
 // 3. Map controllers and enable authorization
