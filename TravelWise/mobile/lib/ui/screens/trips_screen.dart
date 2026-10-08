@@ -388,27 +388,62 @@ class _HeroTripCard extends StatelessWidget {
                           ),
                         ),
                         // Action Pill Button
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                          decoration: BoxDecoration(
-                            gradient: AppTheme.accentGradient,
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppTheme.accent.withValues(alpha: 0.4),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
+                        Row(
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                // For now, just show a dialog or trigger API
+                                showDialog(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    title: const Text('Intelligent Trip Plan'),
+                                    content: const Text('Running AI workflow...'),
+                                    actions: [
+                                      TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close'))
+                                    ],
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                margin: const EdgeInsets.only(right: 8),
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: Colors.blueAccent.withOpacity(0.8),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Text(
+                                  "Intelligent Plan",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12,
+                                  ),
+                                ),
                               ),
-                            ],
-                          ),
-                          child: const Text(
-                            "Let's GO!",
-                            style: TextStyle(
-                              color: AppTheme.bgPrimary,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12,
                             ),
-                          ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              decoration: BoxDecoration(
+                                gradient: AppTheme.accentGradient,
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppTheme.accent.withValues(alpha: 0.4),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: const Text(
+                                "Let's GO!",
+                                style: TextStyle(
+                                  color: AppTheme.bgPrimary,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
