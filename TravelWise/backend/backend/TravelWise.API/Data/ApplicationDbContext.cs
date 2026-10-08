@@ -26,6 +26,14 @@ namespace TravelWise.API.Data
         public DbSet<ConsensusRecord> ConsensusRecords { get; set; }
         public DbSet<BudgetCategory> BudgetCategories { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+
+        // AI Workflow tables
+        public DbSet<TravelWise.API.Models.AI.AiWorkflow> AiWorkflows { get; set; }
+        public DbSet<TravelWise.API.Models.AI.AiAgentExecution> AiAgentExecutions { get; set; }
+        public DbSet<TravelWise.API.Models.AI.AiToolExecution> AiToolExecutions { get; set; }
+        public DbSet<TravelWise.API.Models.AI.AiValidationResult> AiValidationResults { get; set; }
+        public DbSet<TravelWise.API.Models.AI.AiApproval> AiApprovals { get; set; }
+        public DbSet<TravelWise.API.Models.AI.AiRevisionRequest> AiRevisionRequests { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
