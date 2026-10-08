@@ -83,6 +83,14 @@ builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection("Email"));
 builder.Services.AddHttpClient<WeatherTelemetryService>(client => client.Timeout = TimeSpan.FromSeconds(5));
 
+// Register AI Services
+builder.Services.AddHttpClient<TravelWise.API.Services.AI.IAiModelService, TravelWise.API.Services.AI.AiModelService>();
+builder.Services.AddScoped<TravelWise.API.Services.AI.Agents.BudgetAgent>();
+builder.Services.AddScoped<TravelWise.API.Services.AI.Agents.RiskAgent>();
+builder.Services.AddScoped<TravelWise.API.Services.AI.Agents.CollaborationAgent>();
+builder.Services.AddScoped<TravelWise.API.Services.AI.Agents.ItineraryAgent>();
+builder.Services.AddScoped<TravelWise.API.Services.AI.IAiWorkflowOrchestrator, TravelWise.API.Services.AI.AiWorkflowOrchestrator>();
+
 // JWT Authentication Configuration
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
